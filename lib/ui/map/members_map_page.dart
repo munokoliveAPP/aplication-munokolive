@@ -842,7 +842,7 @@ class _MembersMapPageState extends ConsumerState<MembersMapPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    "✨ Smart Ping ! ${user.firstName} partage vos intérêts : ${commonInterests.join(', ')}",
+                    "Smart Ping ! ${user.firstName} partage vos intérêts : ${commonInterests.join(', ')}",
                   ),
                   backgroundColor: Colors.deepPurpleAccent,
                   duration: const Duration(seconds: 5),
