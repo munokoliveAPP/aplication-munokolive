@@ -1,0 +1,30 @@
+name: L10N Check
+on:
+  push:
+    paths:
+      - "lib/l10n/**.arb"
+      - "l10n.yaml"
+      - ".github/workflows/l10n-check.yml"
+      - "scripts/check-arb.ps1"
+  pull_request:
+    paths:
+      - "lib/l10n/**.arb"
+      - "l10n.yaml"
+      - ".github/workflows/l10n-check.yml"
+      - "scripts/check-arb.ps1"
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Flutter Gen L10N
+        run: flutter gen-l10n
+      - name: ARB Validation
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-arb.ps1
+      - name: Flutter Analyze
+        run: flutter analyze

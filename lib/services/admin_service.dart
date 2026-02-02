@@ -1,53 +1,58 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/user_profile.dart';
 
 final adminServiceProvider = Provider<AdminService>((ref) {
-  return AdminService();
+  return AdminService(Supabase.instance.client);
 });
 
 class AdminService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SupabaseClient _supabase;
 
-  Stream<QuerySnapshot> getPendingAdminRequests() {
-    return _firestore
-        .collection('users')
-        .where('status', whereIn: ['pending', 'pending_admin'])
-        .snapshots();
+  AdminService(this._supabase);
+
+  // Get all users
+  Future<List<UserProfile>> getAllUsers() async {
+    try {
+      final response = await _supabase
+          .from('users')
+          .select()
+          .order('created_at', ascending: false);
+
+      return (response as List)
+          .map((data) => UserProfile.fromJson(data))
+          .toList();
+    } catch (e) {
+      return [];
+    }
   }
 
-  Future<void> validateAdmin(String uid) async {
-    // Valider un admin ou un utilisateur standard
-    await _firestore.collection('users').doc(uid).update({
-      'status': 'validated_admin', // ou 'active' selon la logique
-      'isValidated': true,
-    });
+  // Ban user
+  Future<void> banUser(String userId) async {
+    await _supabase.from('users').update({'status': 'banned'}).eq('id', userId);
   }
 
-  Future<void> validateUser(String uid) async {
-    await _firestore.collection('users').doc(uid).update({
-      'status': 'active',
-      'isValidated': true,
-    });
+  // Unban user
+  Future<void> unbanUser(String userId) async {
+    await _supabase.from('users').update({'status': 'active'}).eq('id', userId);
   }
 
-  Future<void> rejectUser(String uid) async {
-    await _firestore.collection('users').doc(uid).update({
-      'status': 'rejected',
-      'isValidated': false,
-    });
+  // Delete user (Permanently)
+  Future<void> deleteUser(String userId) async {
+    await _supabase.from('users').delete().eq('id', userId);
   }
 
-  Future<void> assignAdmin(String uid) async {
-    await _firestore.collection('users').doc(uid).update({
-      'status': 'admin',
-      'category': 'Admin',
-    });
+  // Promote to Admin
+  Future<void> promoteToAdmin(String userId) async {
+    await _supabase.from('users').update({'role': 'admin'}).eq('id', userId);
   }
 
-  Future<void> removeAdmin(String uid) async {
-    await _firestore.collection('users').doc(uid).update({
-      'status': 'member',
-      'category': 'Membre',
-    });
+  // Get Statistics
+  Future<Map<String, dynamic>> getStats() async {
+    // This would typically use a dedicated stats endpoint or complex query
+    // Simplified for now
+    final usersCount = await _supabase.from('users').count();
+    return {'total_users': usersCount};
   }
 }

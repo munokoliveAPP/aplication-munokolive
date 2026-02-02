@@ -1,16 +1,21 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import '../services/offline_service.dart';
 
-final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) {
-  return Connectivity().onConnectivityChanged;
+final offlineServiceProvider = Provider<OfflineService>((ref) {
+  return OfflineService();
 });
 
-final isOnlineProvider = Provider<bool>((ref) {
-  final connectivity = ref.watch(connectivityProvider);
-  return connectivity.when(
-    data: (results) =>
-        results.isNotEmpty && results.first != ConnectivityResult.none,
-    loading: () => true, // Assume online while checking
-    error: (_, __) => false, // Assume offline on error
+final connectivityStatusProvider = StreamProvider<bool>((ref) {
+  final offlineService = ref.watch(offlineServiceProvider);
+  return offlineService.connectivityStream;
+});
+
+final isOfflineProvider = Provider<bool>((ref) {
+  final connectivityAsync = ref.watch(connectivityStatusProvider);
+  return connectivityAsync.when(
+    data: (isConnected) => !isConnected,
+    loading: () => false, // Assume online while loading
+    error: (error, stack) => false, // Assume online on error
   );
 });

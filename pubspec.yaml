@@ -30,42 +30,45 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.2
+  google_fonts: ^8.0.0
   # Firebase & Auth
-  firebase_core: ^3.0.0
-  firebase_auth: ^5.0.0
-  cloud_firestore: ^5.0.0
-  firebase_storage: ^12.0.0
+  firebase_core: ^4.4.0
+  # firebase_auth removed
+  google_sign_in: ^7.2.0
+  # cloud_firestore removed
+  # firebase_storage removed
+  firebase_messaging: ^16.1.1
 
   # Geolocation & maps
-  geolocator: ^11.0.0
-  geocoding: ^3.0.0
-  google_maps_flutter: ^2.6.0
-  geoflutterfire_plus: ^0.0.1
-  widget_to_marker: ^1.0.3
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  # geoflutterfire_plus removed
 
   # State management
-  flutter_riverpod: ^2.5.0
+  flutter_riverpod: ^2.6.1
 
   # Utilities
-  cached_network_image: ^3.3.1
-  intl: ^0.19.0
+  cached_network_image: ^3.4.1
+  intl: ^0.20.2
   shared_preferences: ^2.2.2
   image_picker: ^1.2.1
+  uuid: ^4.3.3
   
   # UI & Effects
   curved_navigation_bar: ^1.0.6
-  confetti: ^0.7.0
+  confetti: ^0.8.0
   glassmorphism: ^3.0.0
   
   # Notifications
-  flutter_local_notifications: ^18.0.0
+  flutter_local_notifications: ^20.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_polyline_points: ^3.1.0
   url_launcher: ^6.3.2
-  riverpod_annotation: ^2.6.1
+  riverpod_annotation: ^2.3.5
   timezone: ^0.10.1
   flutter_secure_storage: ^10.0.0
   encrypt: ^5.0.3
@@ -84,16 +87,48 @@ dependencies:
   permission_handler: ^12.0.1
   battery_plus: ^7.0.0
   shimmer: ^3.0.0
-  firebase_analytics: ^11.6.0
+  firebase_analytics: ^12.1.1
   share_plus: ^12.0.1
+  supabase_flutter: ^2.12.0
+  flutter_blurhash: ^0.9.1
+  animations: ^2.0.11
+  flutter_spinkit: ^5.2.0
+  app_device_integrity: ^1.1.0
+  marquee: ^2.3.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  flutter_localizations:
+    sdk: flutter
+  graphview: ^1.5.1
+  palette_generator: ^0.3.3+7
+  google_generative_ai: ^0.4.3
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  sensors_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
-  riverpod_generator: ^2.6.5
-  build_runner: ^2.5.4
-  fake_cloud_firestore: ^3.1.0
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  riverpod_generator: ^2.4.0
+  build_runner: ^2.4.8
+  # fake_cloud_firestore: ^3.1.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/Logo.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "assets/Logo.png"
+    background_color: "#hex_code"
+    theme_color: "#hex_code"
+  windows:
+    generate: true
+    image_path: "assets/Logo.png"
+    icon_size: 48 # min:48, max:256, default: 48
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -112,8 +147,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  generate: true
 
   assets:
+    - assets/Logo.png
     - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see

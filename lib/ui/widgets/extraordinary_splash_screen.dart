@@ -1,3 +1,4 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -72,11 +73,10 @@ class _ExtraordinarySplashScreenState extends State<ExtraordinarySplashScreen>
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.music_note,
-                          size: 80,
-                          color: AppTheme.textPrimary,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/Logo.png',
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
@@ -97,6 +97,18 @@ class _ExtraordinarySplashScreenState extends State<ExtraordinarySplashScreen>
                         fontSize: 16,
                         color: AppTheme.textSecondary,
                         letterSpacing: 4,
+                      ),
+                    ),
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 40.0),
+                      child: Text(
+                        'Propriété exclusive de Christian Anisonok',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary.withValues(alpha: 0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
                   ],

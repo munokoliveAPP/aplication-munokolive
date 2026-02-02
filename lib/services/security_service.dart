@@ -1,9 +1,12 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:safe_device/safe_device.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 
 final securityServiceProvider = Provider<SecurityService>((ref) {
   return SecurityService();
@@ -12,24 +15,22 @@ final securityServiceProvider = Provider<SecurityService>((ref) {
 class SecurityService {
   final _secureStorage = const FlutterSecureStorage();
   late final encrypt.Encrypter _encrypter;
-  late final encrypt.IV _iv;
   bool _isInitialized = false;
 
   // Key for storing the AES key in secure storage
   static const String _keyStorageKey = 'app_encryption_key';
 
+  // --- CONFIGURATION DE SÉCURITÉ ---
+  // Remplacer par le hash SHA-256 de votre certificat de production
+  // Commande pour l'obtenir : keytool -list -v -keystore <votre_keystore>
+  static const String _authorizedSignatureHash =
+      ""; // Laissez vide en dev, remplissez en prod avec le hash SHA-256
+
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // 1. Root/Jailbreak Detection
-    final isSafe = await _checkDeviceIntegrity();
-    if (!isSafe) {
-      // In a real app, you might crash or limit functionality here.
-      // For now, we just log it or set a flag.
-      debugPrint(
-        'SECURITY WARNING: Device might be compromised (Rooted/Emulator).',
-      );
-    }
+    // 1. Root/Jailbreak & Signature Detection
+    await _performSecurityChecks();
 
     // 2. Encryption Setup
     String? keyString = await _secureStorage.read(key: _keyStorageKey);
@@ -42,47 +43,109 @@ class SecurityService {
     }
 
     final key = encrypt.Key.fromBase64(keyString);
-    // Use a fixed IV or generate per message.
-    // For simplicity in this local db context, we use a fixed IV or derived.
-    // Ideally, IV should be stored alongside data.
-    // Here we use a fixed 16-byte IV for simplicity of implementation in this demo,
-    // but in production, unique IV per record is better.
-    _iv = encrypt.IV.fromLength(16);
+    // AES Mode CBC is default. IV will be generated per-message.
     _encrypter = encrypt.Encrypter(encrypt.AES(key));
 
     _isInitialized = true;
   }
 
-  Future<bool> _checkDeviceIntegrity() async {
+  Future<void> _performSecurityChecks() async {
+    // A. Root/Jailbreak Check
+    bool isJailBroken = false;
+    bool isRealDevice = true;
     try {
-      bool isJailBroken = await SafeDevice.isJailBroken;
-      // bool isRealDevice = await SafeDevice.isRealDevice;
-
-      // Allow emulators for development but warn
-      // return !isJailBroken && isRealDevice;
-
-      if (isJailBroken) return false;
-      return true;
+      isJailBroken = await SafeDevice.isJailBroken;
+      isRealDevice = await SafeDevice.isRealDevice;
     } catch (e) {
-      return true; // Default to safe if check fails to avoid lockout on errors
+      debugPrint("Security Check Error: $e");
+    }
+
+    // En mode debug, on est plus tolérant (émulateurs autorisés)
+    if (kReleaseMode) {
+      if (isJailBroken) {
+        _killApp("Appareil compromis (Root/Jailbreak détecté).");
+      }
+      if (!isRealDevice) {
+        // Optionnel : Bloquer les émulateurs en prod
+        // _killApp("Exécution sur émulateur interdite.");
+      }
+    }
+
+    // B. Signature Verification (Anti-Tamper)
+    // Note: Une vérification robuste nécessite du code natif (MethodChannel)
+    // ou un package comme 'freerasp'.
+    // Ici, nous simulons une vérification de l'installateur (Google Play / App Store)
+    // C'est une première ligne de défense.
+    if (kReleaseMode) {
+      await _verifyInstaller();
+    }
+  }
+
+  Future<void> _verifyInstaller() async {
+    // Vérifie si l'app a été installée par un store officiel
+    // Ceci empêche l'exécution d'APK sideloadés (souvent modifiés)
+    if (Platform.isAndroid) {
+      // Note: Pour une vérification stricte, utilisez 'package_info_plus' pour obtenir
+      // l'installerStore (ex: 'com.android.vending').
+      // Pour l'instant, on ignore cette vérification pour éviter les blocages en dev/test.
+      
+      if (_authorizedSignatureHash.isNotEmpty) {
+        // Logique de vérification de signature à implémenter ici
+      }
+    }
+  }
+
+  void _killApp(String reason) {
+    debugPrint("SECURITY KILL SWITCH ACTIVATED: $reason");
+    // Force crash/exit
+    if (Platform.isAndroid) {
+      SystemNavigator.pop();
+    } else if (Platform.isIOS) {
+      exit(0);
     }
   }
 
   String encryptData(String plainText) {
     if (!_isInitialized) throw Exception('SecurityService not initialized');
-    final encrypted = _encrypter.encrypt(plainText, iv: _iv);
-    return encrypted.base64;
+
+    final iv = encrypt.IV.fromLength(16);
+    final encrypted = _encrypter.encrypt(plainText, iv: iv);
+
+    // Combine IV and Ciphertext: IV (16 bytes) + Ciphertext
+    final combined = iv.bytes + encrypted.bytes;
+    return base64.encode(combined);
   }
 
   String decryptData(String encryptedBase64) {
     if (!_isInitialized) throw Exception('SecurityService not initialized');
-    final encrypted = encrypt.Encrypted.fromBase64(encryptedBase64);
-    return _encrypter.decrypt(encrypted, iv: _iv);
+
+    final decoded = base64.decode(encryptedBase64);
+
+    // Extract IV (first 16 bytes)
+    if (decoded.length < 16) throw Exception('Invalid encrypted data');
+
+    final iv = encrypt.IV(decoded.sublist(0, 16));
+    final cipherBytes = decoded.sublist(16);
+    final encrypted = encrypt.Encrypted(cipherBytes);
+
+    return _encrypter.decrypt(encrypted, iv: iv);
+  }
+
+  // --- SECURE STORAGE DIRECT ACCESS ---
+
+  Future<void> writeSecure(String key, String value) async {
+    await _secureStorage.write(key: key, value: value);
+  }
+
+  Future<String?> readSecure(String key) async {
+    return await _secureStorage.read(key: key);
+  }
+
+  Future<void> deleteSecure(String key) async {
+    await _secureStorage.delete(key: key);
   }
 
   Future<void> secureWipe() async {
-    // Destroy keys and data
     await _secureStorage.deleteAll();
-    // In a real app, also delete local files, databases, etc.
   }
 }

@@ -1,18 +1,16 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:ui' as ui;
+import 'package:latlong2/latlong.dart';
+// import 'package:geocoding/geocoding.dart'; // Uncomment if geocoding is needed
 
 class LocationPickerWidget extends StatefulWidget {
-  final GeoPoint? selectedLocation;
-  final Function(GeoPoint, String?) onLocationSelected;
+  final Function(String address, LatLng? coordinates) onLocationSelected;
+  final String? initialLocation;
 
   const LocationPickerWidget({
     super.key,
-    this.selectedLocation,
     required this.onLocationSelected,
+    this.initialLocation,
   });
 
   @override
@@ -20,290 +18,126 @@ class LocationPickerWidget extends StatefulWidget {
 }
 
 class _LocationPickerWidgetState extends State<LocationPickerWidget> {
-  bool _isGettingLocation = false;
-  String? _address;
-  GoogleMapController? _mapController;
-  LatLng? _currentPosition;
-
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isGettingLocation = true;
-      _address = null;
-    });
-
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          throw Exception('Permission de localisation refusée');
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        throw Exception('Permission de localisation refusée définitivement');
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      final geoPoint = GeoPoint(position.latitude, position.longitude);
-      final latLng = LatLng(position.latitude, position.longitude);
-
-      setState(() {
-        _currentPosition = latLng;
-      });
-
-      // Get address from coordinates
-      try {
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-
-        if (placemarks.isNotEmpty) {
-          final place = placemarks.first;
-          final addressParts = <String>[];
-
-          if (place.street != null && place.street!.isNotEmpty) {
-            addressParts.add(place.street!);
-          }
-          if (place.subLocality != null && place.subLocality!.isNotEmpty) {
-            addressParts.add(place.subLocality!);
-          }
-          if (place.locality != null && place.locality!.isNotEmpty) {
-            addressParts.add(place.locality!);
-          }
-          if (place.administrativeArea != null &&
-              place.administrativeArea!.isNotEmpty) {
-            addressParts.add(place.administrativeArea!);
-          }
-
-          final address = addressParts.isNotEmpty
-              ? addressParts.join(', ')
-              : 'Position détectée';
-
-          setState(() {
-            _address = address;
-          });
-
-          widget.onLocationSelected(geoPoint, address);
-        } else {
-          widget.onLocationSelected(geoPoint, null);
-        }
-      } catch (e) {
-        debugPrint('Geocoding error: $e');
-        widget.onLocationSelected(geoPoint, null);
-      }
-
-      // Update map
-      if (_mapController != null && _currentPosition != null) {
-        _mapController!.animateCamera(
-          CameraUpdate.newLatLngZoom(_currentPosition!, 16),
-        );
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Position GPS attachée avec succès !'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur GPS: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isGettingLocation = false);
-      }
-    }
-  }
+  final TextEditingController _controller = TextEditingController();
+  LatLng? _selectedCoordinates;
 
   @override
   void initState() {
     super.initState();
-    if (widget.selectedLocation != null) {
-      _currentPosition = LatLng(
-        widget.selectedLocation!.latitude,
-        widget.selectedLocation!.longitude,
-      );
+    if (widget.initialLocation != null) {
+      _controller.text = widget.initialLocation!;
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final hasLocation =
-        widget.selectedLocation != null || _currentPosition != null;
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Location Button
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: hasLocation
-                    ? const LinearGradient(
-                        colors: [Color(0xFF00E676), Color(0xFF00C853)],
-                      )
-                    : LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.1),
-                          Colors.white.withValues(alpha: 0.05),
-                        ],
-                      ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: hasLocation
-                      ? Colors.white.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.1),
-                  width: 1.5,
-                ),
+  void _pickLocation() async {
+    // This is a placeholder for a real map picker navigation.
+    // In a full implementation, this would navigate to a MapPage
+    // where the user selects a point, and we reverse geocode it.
+    
+    // For now, we simulate a picker or just use the text field.
+    // Let's show a dialog for manual entry or "Current Location" simulation.
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Choisir un lieu"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                labelText: "Adresse ou nom du lieu",
+                hintText: "Ex: Église Centrale, Paris",
+                border: OutlineInputBorder(),
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _isGettingLocation ? null : _getCurrentLocation,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: hasLocation
-                                ? Colors.white.withValues(alpha: 0.2)
-                                : Colors.white.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: _isGettingLocation
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Icon(
-                                  hasLocation
-                                      ? Icons.check_circle
-                                      : Icons.my_location,
-                                  color: hasLocation
-                                      ? Colors.white
-                                      : const Color(0xFFDF00FF),
-                                  size: 24,
-                                ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                hasLocation
-                                    ? 'Lieu détecté'
-                                    : 'Obtenir ma position',
-                                style: TextStyle(
-                                  color: hasLocation
-                                      ? Colors.white
-                                      : Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              if (hasLocation && _address != null) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  _address!,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 13,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              onChanged: (value) {
+                // Real-time updates if needed
+              },
             ),
-          ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Simulate getting current location
+                _controller.text = "Position actuelle (Simulée)";
+                _selectedCoordinates = const LatLng(48.8566, 2.3522); // Paris
+                setState(() {});
+                widget.onLocationSelected(_controller.text, _selectedCoordinates);
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.my_location),
+              label: const Text("Utiliser ma position"),
+            ),
+          ],
         ),
-
-        // Subtle instruction
-        Padding(
-          padding: const EdgeInsets.only(top: 8, left: 8),
-          child: Text(
-            'Pour une précision maximale, nous vous recommandons d\'être sur place au moment de la publication.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 11,
-              fontStyle: FontStyle.italic,
-            ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Annuler"),
           ),
-        ),
-
-        // Mini Map
-        if (hasLocation && _currentPosition != null) ...[
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1.5,
-                ),
-              ),
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: _currentPosition!,
-                  zoom: 16,
-                ),
-                onMapCreated: (controller) {
-                  _mapController = controller;
-                },
-                markers: {
-                  Marker(
-                    markerId: const MarkerId('event_location'),
-                    position: _currentPosition!,
-                    icon: BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueViolet,
-                    ),
-                  ),
-                },
-                zoomControlsEnabled: false,
-                mapToolbarEnabled: false,
-                myLocationButtonEnabled: false,
-                scrollGesturesEnabled: false,
-                zoomGesturesEnabled: false,
-                tiltGesturesEnabled: false,
-                rotateGesturesEnabled: false,
-              ),
-            ),
+          TextButton(
+            onPressed: () {
+              widget.onLocationSelected(_controller.text, _selectedCoordinates);
+              setState(() {});
+              Navigator.pop(context);
+            },
+            child: const Text("Valider"),
           ),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Lieu de l'événement",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _pickLocation,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on, color: Colors.purpleAccent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _controller.text.isEmpty
+                        ? "Appuyer pour choisir un lieu"
+                        : _controller.text,
+                    style: TextStyle(
+                      color: _controller.text.isEmpty ? Colors.white38 : Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white38),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

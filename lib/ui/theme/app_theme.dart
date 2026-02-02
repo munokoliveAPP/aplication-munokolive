@@ -1,141 +1,108 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Palette Stricte
-  static const primaryColor = Color(0xFFE600E6); // Fuchsia vif
-  static const primaryColorDark = Color(0xFFCC00CC);
-  static const secondaryColor = Color(0xFF800080); // Violet Royal
+  static const Color primaryColor = Color(0xFFFF00FF); // Magenta Neon
+  static const Color secondaryColor = Colors.cyanAccent;
+  static const Color backgroundDark = Color(0xFF0F0425); // Premium Divine Background
+  static const Color backgroundLight = Color(0xFF1A1A1A);
+  static const Color surfaceDark = Color(0xFF121212);
+  
+  static const Color textPrimary = Colors.white;
+  static const Color textSecondary = Colors.white70;
 
-  static const backgroundDark = Color(0xFF190019);
-  static const backgroundLight = Color(0xFF330033);
-  static const backgroundGradientStart = Color(0xFF4D004D);
-  static const backgroundGradientEnd = Color(0xFF190019);
-
-  static const textPrimary = Color(0xFFFFFFFF); // Blanc pur
-  static const textSecondary = Color(0xFFF0F0F0); // Gris très clair
-
-  static const inputBorder = Color(0xFF990099);
-  static const inputBorderActive = Color(0xFFE600E6);
-
-  // Gradients
-  static const LinearGradient mainGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [backgroundGradientStart, backgroundGradientEnd],
-  );
+  static const Color backgroundGradientStart = Color(0xFF2D0036); // Deep Purple
+  static const Color backgroundGradientEnd = Colors.black;
 
   static const LinearGradient buttonGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [primaryColorDark, secondaryColor],
+    colors: [Colors.purpleAccent, Colors.deepPurple],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
 
-  // Backwards-compatible aliases for older code that used different names
-  static const background = backgroundDark;
-  static const surface = backgroundLight;
-  static const primary = primaryColor;
-  static const accent = secondaryColor;
+  static const BoxDecoration meshGradientDecoration = BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFF2D0036), Colors.black, Color(0xFF001220)],
+    ),
+  );
 
-  static final darkTheme = ThemeData.dark().copyWith(
+  static final ThemeData lightTheme = ThemeData(
+    brightness: Brightness.light,
     primaryColor: primaryColor,
-    scaffoldBackgroundColor:
-        backgroundDark, // Default, but pages should use Gradient
-    colorScheme: const ColorScheme.dark(
+    scaffoldBackgroundColor: Colors.white,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+      iconTheme: IconThemeData(color: Colors.black),
+    ),
+    colorScheme: const ColorScheme.light(
       primary: primaryColor,
       secondary: secondaryColor,
-      surface: backgroundLight,
+      surface: Colors.white,
       onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: textPrimary,
+      onSecondary: Colors.black,
+      onSurface: Colors.black,
     ),
+    useMaterial3: true,
+    fontFamily: 'Poppins',
+  );
+
+  static final ThemeData darkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primaryColor: primaryColor,
+    scaffoldBackgroundColor: backgroundDark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.transparent, // For gradient backgrounds
+      backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
         color: textPrimary,
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
-        letterSpacing: 1.0,
-      ),
-      iconTheme: IconThemeData(color: textPrimary),
-    ),
-    cardTheme: CardThemeData(
-      color: backgroundLight,
-      elevation: 8,
-      shadowColor: Colors.black.withValues(alpha: 0.4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: secondaryColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
       ),
     ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style:
-          ElevatedButton.styleFrom(
-            backgroundColor: primaryColor, // Fallback if gradient not used
-            foregroundColor: Colors.white,
-            elevation: 6,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ).copyWith(
-            // Adding shadow
-            shadowColor: WidgetStateProperty.all(
-              Colors.black.withValues(alpha: 0.5),
-            ),
-          ),
+    colorScheme: const ColorScheme.dark(
+      primary: primaryColor,
+      secondary: secondaryColor,
+      surface: surfaceDark,
+      onPrimary: Colors.white,
+      onSecondary: Colors.black,
+      onSurface: textPrimary,
     ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: primaryColor,
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: backgroundLight,
-      labelStyle: const TextStyle(color: textSecondary),
-      hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.6)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: inputBorder),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: inputBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: inputBorderActive, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent),
-      ),
-    ),
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-        color: textPrimary,
-        fontWeight: FontWeight.bold,
-        fontSize: 32,
-      ),
-      titleLarge: TextStyle(
-        color: textPrimary,
-        fontWeight: FontWeight.bold,
-        fontSize: 22,
-      ),
-      bodyLarge: TextStyle(color: textPrimary, fontSize: 16),
-      bodyMedium: TextStyle(color: textSecondary, fontSize: 14),
-    ),
+    useMaterial3: true,
+    fontFamily: 'Poppins', // Assuming font
   );
+
+  static final OutlineInputBorder inputBorderActive = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: const BorderSide(color: primaryColor, width: 2),
+  );
+
+  static ButtonStyle ctaElevated(Color bg, Color shadow) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      elevation: 10,
+      shadowColor: shadow,
+    );
+  }
+
+  static ButtonStyle ctaOutlined(Color fg) {
+    return OutlinedButton.styleFrom(
+      foregroundColor: fg,
+      side: BorderSide(color: fg),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+    );
+  }
 }

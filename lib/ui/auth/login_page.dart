@@ -1,10 +1,17 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'dart:ui';
+import 'dart:async'; // Added for Timer
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:confetti/confetti.dart';
 import '../../services/auth_service.dart';
+import '../../providers/user_provider.dart';
+import 'package:munokolive_music/ui/navigation/main_screen.dart'; // Added for fallback navigation
 import '../theme/app_theme.dart';
+import 'package:munokolive_music/l10n/app_localizations.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -18,28 +25,40 @@ class _LoginPageState extends ConsumerState<LoginPage>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController(); // Add this
+  final _confirmPasswordController = TextEditingController();
+  final _referralCodeController = TextEditingController(); // Added
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
-  final _confirmPasswordFocus = FocusNode(); // Add this
+  final _confirmPasswordFocus = FocusNode();
+  final _referralCodeFocus = FocusNode(); // Added
+
+  late ConfettiController _confettiController;
 
   bool _isLoading = false;
-  bool _isLogin = true; // Toggle between Login and Sign Up
+  bool _isLogin = true;
   bool obscurePassword = true;
-  bool obscureConfirmPassword = true; // Add this
+  bool obscureConfirmPassword = true;
   bool _isFocused = false;
   String? _emailError;
   String? _passwordError;
-  String? _confirmPasswordError; // Add this
+  String? _confirmPasswordError;
 
   late AnimationController _backgroundController;
   late AnimationController _rotationController;
   late AnimationController _pulseController;
   late AnimationController _skeletonController;
 
+  // State for visual progress
+  double _progressValue = 0.0;
+  String _loadingText = '';
+  Timer? _progressTimer;
+
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     _backgroundController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
@@ -62,26 +81,28 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
     _emailFocus.addListener(_onFocusChange);
     _passwordFocus.addListener(_onFocusChange);
-    _confirmPasswordFocus.addListener(_onFocusChange); // Add this
+    _confirmPasswordFocus.addListener(_onFocusChange);
     _emailController.addListener(_validateEmail);
     _passwordController.addListener(_validatePassword);
-    _confirmPasswordController.addListener(
-      _validateConfirmPassword,
-    ); // Add this
+    _confirmPasswordController.addListener(_validateConfirmPassword);
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose(); // Add this
+    _confirmPasswordController.dispose();
+    _referralCodeController.dispose(); // Added
     _emailFocus.dispose();
     _passwordFocus.dispose();
-    _confirmPasswordFocus.dispose(); // Add this
+    _confirmPasswordFocus.dispose();
+    _referralCodeFocus.dispose(); // Added
     _backgroundController.dispose();
     _rotationController.dispose();
     _pulseController.dispose();
     _skeletonController.dispose();
+    _confettiController.dispose();
+    _progressTimer?.cancel();
     super.dispose();
   }
 
@@ -98,23 +119,29 @@ class _LoginPageState extends ConsumerState<LoginPage>
     final val = _emailController.text.trim();
     String? error;
     if (val.isNotEmpty && !val.contains('@')) {
-      error = 'Email invalide';
+      error = AppLocalizations.of(context)!.invalidEmail;
     }
     if (error != _emailError) {
-      if (error != null) HapticFeedback.lightImpact();
+      if (error != null) {
+        HapticFeedback.lightImpact();
+      }
       setState(() => _emailError = error);
     }
   }
 
   void _validateConfirmPassword() {
-    if (_isLogin) return;
+    if (_isLogin) {
+      return;
+    }
     final val = _confirmPasswordController.text;
     String? error;
     if (val.isNotEmpty && val != _passwordController.text) {
-      error = 'Les mots de passe ne correspondent pas';
+      error = AppLocalizations.of(context)!.passwordsMismatch;
     }
     if (error != _confirmPasswordError) {
-      if (error != null) HapticFeedback.lightImpact();
+      if (error != null) {
+        HapticFeedback.lightImpact();
+      }
       setState(() => _confirmPasswordError = error);
     }
   }
@@ -123,10 +150,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
     final val = _passwordController.text;
     String? error;
     if (val.isNotEmpty && val.length < 6) {
-      error = 'Min 6 caractères';
+      error = AppLocalizations.of(context)!.passwordMinLength;
     }
     if (error != _passwordError) {
-      if (error != null) HapticFeedback.lightImpact();
+      if (error != null) {
+        HapticFeedback.lightImpact();
+      }
       setState(() => _passwordError = error);
     }
     if (!_isLogin && _confirmPasswordController.text.isNotEmpty) {
@@ -153,7 +182,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
   }
 
-  Widget _buildOrbitingIcon(IconData icon, double angleOffset) {
+  Widget _buildOrbitingIcon(Widget child, double angleOffset) {
     const double rad = math.pi / 180;
     const double radius = 65; // Reduced distance from center
     const double center = 80; // Center for 160x160 container
@@ -164,15 +193,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
     final double y = center + radius * -1 * math.cos(angle);
 
     return Positioned(
-      left: x - 15, // Center the icon (size 30)
-      top: y - 15,
+      left: x - 13, // Center the icon (size 26)
+      top: y - 13,
       child: Transform.rotate(
         angle: -angle, // Keep icon upright
-        child: Icon(
-          icon,
-          color: AppTheme.primaryColor.withValues(alpha: 0.8),
-          size: 26, // Slightly smaller icon
-        ),
+        child: child,
       ),
     );
   }
@@ -180,54 +205,181 @@ class _LoginPageState extends ConsumerState<LoginPage>
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez corriger les erreurs dans le formulaire'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.fixFormErrors),
           backgroundColor: Colors.orange,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    // Reset progress
+    setState(() {
+      _isLoading = true;
+      _progressValue = 0.0;
+      _loadingText = AppLocalizations.of(context)!.initializing;
+    });
+
+    // Start Visual Progress Timer
+    _startProgressTimer();
 
     try {
       final auth = ref.read(authServiceProvider);
       if (_isLogin) {
+        setState(
+          () => _loadingText = AppLocalizations.of(context)!.authenticating,
+        );
         await auth.signInWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
+
+        // Success
+        setState(() {
+          _progressValue = 1.0;
+          _loadingText = AppLocalizations.of(context)!.success;
+        });
+        _confettiController.play();
+        HapticFeedback.heavyImpact();
+
+        // Force refresh user profile to avoid "stuck" state
+        ref.invalidate(userProfileProvider);
+
+        // Artificial delay for effect & ensure state propagation
+        await Future.delayed(const Duration(milliseconds: 1500));
+
+        if (mounted) {
+          // Explicitly check navigation if AuthWrapper didn't take over
+          final user = Supabase.instance.client.auth.currentUser;
+          if (user != null) {
+            setState(
+              () => _loadingText = AppLocalizations.of(context)!.redirecting,
+            );
+
+            // FALLBACK NAVIGATION: If AuthWrapper doesn't react within 2 seconds
+            Future.delayed(const Duration(seconds: 2), () {
+              if (mounted &&
+                  Supabase.instance.client.auth.currentUser != null) {
+                // Check if we are still on this screen (login page)
+                // We can't easily check if we are still top route, but we can try to pushReplacement
+                // However, AuthWrapper is the parent. If we pushReplacement, we replace AuthWrapper?
+                // No, LoginPage is child of AuthWrapper (via BiometricGate).
+                // If we are here, it means AuthWrapper is still rendering LoginPage.
+
+                // Let's force a reload of the whole app structure or just push MainScreen
+                debugPrint("⚠️ AuthWrapper stuck. Forcing navigation.");
+
+                // Safest bet: Navigate to MainScreen and let MainScreen redirect if needed?
+                // Or CompleteProfilePage if we suspect profile is missing.
+
+                // If we push MainScreen, we bypass AuthWrapper logic for this session.
+                // That's acceptable for a fallback to unblock the user.
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const MainScreen()),
+                );
+              }
+            });
+          }
+        }
       } else {
+        setState(() => _loadingText = AppLocalizations.of(context)!.verifying);
+        final referralCode = _referralCodeController.text.trim();
+        if (referralCode.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.referralCodeRequired),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+
+        final referrerId = await auth.validateReferralCode(referralCode);
+        if (!mounted) return;
+
+        if (referrerId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invalidReferralCode),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+
+        setState(
+          () => _loadingText = AppLocalizations.of(context)!.creatingAccount,
+        );
         await auth.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
+          {'referred_by': referrerId, 'referrer_code': referralCode},
         );
+
+        setState(() {
+          _progressValue = 1.0;
+          _loadingText = AppLocalizations.of(context)!.welcome;
+        });
+        _confettiController.play();
+        HapticFeedback.heavyImpact();
+
+        ref.invalidate(userProfileProvider);
+        await Future.delayed(const Duration(milliseconds: 1500));
       }
       // Navigation is handled by authStateChanges
     } catch (e) {
+      _progressTimer?.cancel();
       if (mounted) {
-        String message = 'Une erreur est survenue';
+        final l10n = AppLocalizations.of(context)!;
+        setState(() {
+          _progressValue = 0.0;
+          _loadingText = "";
+        });
+
+        String message = l10n.genericError;
         final errorStr = e.toString();
 
         if (errorStr.contains('invalid-credential') ||
             errorStr.contains('wrong-password') ||
-            errorStr.contains('user-not-found')) {
-          message =
-              'Email ou mot de passe incorrect.\nSi vous n\'avez pas encore de compte, veuillez vous inscrire.';
-        } else if (errorStr.contains('email-already-in-use')) {
-          message = 'Cet email est déjà utilisé par un autre compte.';
-        } else if (errorStr.contains('invalid-email')) {
-          message = 'L\'adresse email est invalide.';
-        } else if (errorStr.contains('weak-password')) {
-          message = 'Le mot de passe est trop faible (6 caractères min).';
-        } else if (errorStr.contains('network-request-failed')) {
-          message = 'Problème de connexion internet.';
-        } else if (errorStr.contains('rate-limited')) {
-          message = 'Trop de tentatives. Veuillez patienter un moment.';
+            errorStr.contains('user-not-found') ||
+            errorStr.contains('Invalid login credentials')) {
+          // Security: Report failed attempt for Brute Force Protection
+          try {
+            await Supabase.instance.client.rpc('record_failed_login');
+          } catch (_) {
+            // Fail silently if reporting fails (don't block UI)
+          }
+
+          message = l10n.invalidCredentials;
+
+          // Re-check mounted after async call
+          if (!mounted) return;
+        } else if (errorStr.contains('over_email_send_rate_limit') ||
+            errorStr.contains(
+              'For security purposes, you can only request this after',
+            )) {
+          // Supabase rate limit when too many verification emails are requested
+          message = l10n.securityDelay;
+        } else if (errorStr.contains('User already registered')) {
+          message = l10n.emailInUse;
+        } else if (errorStr.contains('Unable to validate email address')) {
+          message = l10n.invalidEmailMessage;
+        } else if (errorStr.contains(
+          'Password should be at least 6 characters',
+        )) {
+          message = l10n.weakPassword;
+        } else if (errorStr.contains('network-request-failed') ||
+            errorStr.contains('SocketException')) {
+          message = l10n.networkError;
+        } else if (errorStr.contains('rate-limited') ||
+            errorStr.contains('Too many requests')) {
+          message = l10n.rateLimitError;
         } else {
           message =
-              'Erreur: ${errorStr.replaceAll(RegExp(r'\[.*?\]'), '').trim()}';
+              '${l10n.errorPrefix}${errorStr.replaceAll(RegExp(r'\[.*?\]'), '').trim()}';
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -237,9 +389,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
             duration: const Duration(seconds: 5),
             action:
                 (errorStr.contains('invalid-credential') ||
-                    errorStr.contains('user-not-found'))
+                    errorStr.contains('user-not-found') ||
+                    errorStr.contains('Invalid login credentials'))
                 ? SnackBarAction(
-                    label: 'S\'INSCRIRE',
+                    label: AppLocalizations.of(
+                      context,
+                    )!.registerButton.toUpperCase(),
                     textColor: Colors.white,
                     onPressed: () => setState(() => _isLogin = false),
                   )
@@ -249,9 +404,30 @@ class _LoginPageState extends ConsumerState<LoginPage>
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        // Don't set isLoading to false immediately on success to keep the "Success" state visible until nav
+        if (_progressValue < 1.0) {
+          setState(() => _isLoading = false);
+        }
       }
     }
+  }
+
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_progressValue < 0.9) {
+          _progressValue += 0.05;
+        } else {
+          // Slow down near the end
+          if (_progressValue < 0.95) _progressValue += 0.005;
+        }
+      });
+    });
   }
 
   @override
@@ -325,6 +501,8 @@ class _LoginPageState extends ConsumerState<LoginPage>
             ),
           ),
 
+          // Confetti (Moved to end of Stack)
+
           // Focus Overlay
           Positioned.fill(
             child: IgnorePointer(
@@ -386,18 +564,26 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                     },
                                   ),
 
-                                  // Orbiting Icons
+                                  // Orbiting Icons (Guitar only)
                                   AnimatedBuilder(
                                     animation: _rotationController,
                                     builder: (context, child) {
                                       return Stack(
                                         children: [
-                                          _buildOrbitingIcon(Icons.piano, 0),
+                                          // Swirling Guitar (Music Note as placeholder for Guitar)
                                           _buildOrbitingIcon(
-                                            Icons.music_note,
-                                            120,
+                                            Transform.rotate(
+                                              angle: -0.5, // Tilted
+                                              child: Icon(
+                                                Icons
+                                                    .queue_music, // Represents the guitar
+                                                color: AppTheme.primaryColor
+                                                    .withValues(alpha: 0.9),
+                                                size: 32,
+                                              ),
+                                            ),
+                                            0, // Angle 0
                                           ),
-                                          _buildOrbitingIcon(Icons.mic, 240),
                                         ],
                                       );
                                     },
@@ -425,11 +611,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                               ),
                                             ],
                                           ),
-                                          child: const Icon(
-                                            Icons.music_note,
-                                            size: 60, // Reduced size
-                                            color: Colors
-                                                .white, // White icon for better contrast
+                                          child: ClipOval(
+                                            child: Image.asset(
+                                              'assets/Logo.png',
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -533,8 +719,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                               ),
                                               child: Text(
                                                 _isLogin
-                                                    ? 'Heureux de vous revoir !'
-                                                    : 'Rejoindre la Famille',
+                                                    ? AppLocalizations.of(
+                                                        context,
+                                                      )!.welcomeBack
+                                                    : AppLocalizations.of(
+                                                        context,
+                                                      )!.joinFamily,
                                                 key: ValueKey<bool>(_isLogin),
                                                 style: const TextStyle(
                                                   color: Colors.white,
@@ -548,8 +738,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                             const SizedBox(height: 8),
                                             Text(
                                               _isLogin
-                                                  ? 'Connectez-vous pour continuer'
-                                                  : 'Créez votre compte en quelques secondes',
+                                                  ? AppLocalizations.of(
+                                                      context,
+                                                    )!.loginToContinue
+                                                  : AppLocalizations.of(
+                                                      context,
+                                                    )!.createAccountSubtitle,
                                               style: TextStyle(
                                                 color: AppTheme.textSecondary
                                                     .withValues(alpha: 0.7),
@@ -571,7 +765,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                 textInputAction:
                                                     TextInputAction.next,
                                                 decoration: InputDecoration(
-                                                  labelText: 'Email',
+                                                  labelText:
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.emailLabel,
                                                   labelStyle: const TextStyle(
                                                     color:
                                                         AppTheme.textSecondary,
@@ -589,23 +786,14 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                               12,
                                                             ),
                                                         borderSide: BorderSide(
-                                                          color: AppTheme
-                                                              .inputBorder
+                                                          color: Colors.grey
                                                               .withValues(
                                                                 alpha: 0.3,
                                                               ),
                                                         ),
                                                       ),
-                                                  focusedBorder: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                    borderSide: const BorderSide(
-                                                      color: AppTheme
-                                                          .inputBorderActive,
-                                                    ),
-                                                  ),
+                                                  focusedBorder: AppTheme
+                                                      .inputBorderActive,
                                                   filled: true,
                                                   fillColor: AppTheme
                                                       .backgroundDark
@@ -619,15 +807,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                 validator: (val) {
                                                   if (val == null ||
                                                       val.isEmpty) {
-                                                    return 'Email requis';
+                                                    return AppLocalizations.of(
+                                                      context,
+                                                    )!.emailRequired;
                                                   }
                                                   if (!val.contains('@')) {
-                                                    return 'Email invalide';
+                                                    return AppLocalizations.of(
+                                                      context,
+                                                    )!.invalidEmail;
                                                   }
                                                   return null;
                                                 },
                                               ),
-                                              const SizedBox(height: 16),
+                                              const SizedBox(height: 24),
                                               TextFormField(
                                                 controller: _passwordController,
                                                 focusNode: _passwordFocus,
@@ -635,12 +827,25 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                 style: const TextStyle(
                                                   color: AppTheme.textPrimary,
                                                 ),
-                                                textInputAction:
-                                                    TextInputAction.done,
-                                                onFieldSubmitted: (_) =>
-                                                    _submit(),
+                                                textInputAction: _isLogin
+                                                    ? TextInputAction.done
+                                                    : TextInputAction.next,
+                                                onFieldSubmitted: (_) {
+                                                  if (_isLogin) {
+                                                    _submit();
+                                                  } else {
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).requestFocus(
+                                                      _confirmPasswordFocus,
+                                                    );
+                                                  }
+                                                },
                                                 decoration: InputDecoration(
-                                                  labelText: 'Mot de passe',
+                                                  labelText:
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.passwordLabel,
                                                   labelStyle: const TextStyle(
                                                     color:
                                                         AppTheme.textSecondary,
@@ -673,23 +878,14 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                               12,
                                                             ),
                                                         borderSide: BorderSide(
-                                                          color: AppTheme
-                                                              .inputBorder
+                                                          color: Colors.grey
                                                               .withValues(
                                                                 alpha: 0.3,
                                                               ),
                                                         ),
                                                       ),
-                                                  focusedBorder: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                    borderSide: const BorderSide(
-                                                      color: AppTheme
-                                                          .inputBorderActive,
-                                                    ),
-                                                  ),
+                                                  focusedBorder: AppTheme
+                                                      .inputBorderActive,
                                                   filled: true,
                                                   fillColor: AppTheme
                                                       .backgroundDark
@@ -702,9 +898,155 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                 ),
                                                 validator: (val) =>
                                                     val!.length < 6
-                                                    ? 'Min 6 caractères'
+                                                    ? AppLocalizations.of(
+                                                        context,
+                                                      )!.passwordMinLength
                                                     : null,
                                               ),
+                                              if (!_isLogin) ...[
+                                                const SizedBox(height: 24),
+                                                TextFormField(
+                                                  controller:
+                                                      _confirmPasswordController,
+                                                  focusNode:
+                                                      _confirmPasswordFocus,
+                                                  obscureText:
+                                                      obscureConfirmPassword,
+                                                  style: const TextStyle(
+                                                    color: AppTheme.textPrimary,
+                                                  ),
+                                                  textInputAction:
+                                                      TextInputAction.next,
+                                                  onFieldSubmitted: (_) =>
+                                                      FocusScope.of(
+                                                        context,
+                                                      ).requestFocus(
+                                                        _referralCodeFocus,
+                                                      ),
+                                                  decoration: InputDecoration(
+                                                    labelText:
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.confirmPasswordLabel,
+                                                    labelStyle: const TextStyle(
+                                                      color: AppTheme
+                                                          .textSecondary,
+                                                    ),
+                                                    errorText:
+                                                        _confirmPasswordError,
+                                                    prefixIcon: const Icon(
+                                                      Icons.lock_outline,
+                                                      color:
+                                                          AppTheme.primaryColor,
+                                                    ),
+                                                    suffixIcon: IconButton(
+                                                      icon: Icon(
+                                                        obscureConfirmPassword
+                                                            ? Icons
+                                                                  .visibility_off
+                                                            : Icons.visibility,
+                                                        color: AppTheme
+                                                            .textSecondary,
+                                                      ),
+                                                      onPressed: () => setState(
+                                                        () => obscureConfirmPassword =
+                                                            !obscureConfirmPassword,
+                                                      ),
+                                                    ),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.3,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                    focusedBorder: AppTheme
+                                                        .inputBorderActive,
+                                                    filled: true,
+                                                    fillColor: AppTheme
+                                                        .backgroundDark
+                                                        .withValues(alpha: 0.5),
+                                                  ),
+                                                  validator: (val) {
+                                                    if (val !=
+                                                        _passwordController
+                                                            .text) {
+                                                      return AppLocalizations.of(
+                                                        context,
+                                                      )!.passwordsMismatch;
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
+                                                const SizedBox(height: 24),
+                                                TextFormField(
+                                                  controller:
+                                                      _referralCodeController,
+                                                  focusNode: _referralCodeFocus,
+                                                  style: const TextStyle(
+                                                    color: AppTheme.textPrimary,
+                                                  ),
+                                                  textInputAction:
+                                                      TextInputAction.done,
+                                                  onFieldSubmitted: (_) =>
+                                                      _submit(),
+                                                  decoration: InputDecoration(
+                                                    labelText:
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.referralCodeLabel,
+                                                    labelStyle: const TextStyle(
+                                                      color: AppTheme
+                                                          .textSecondary,
+                                                    ),
+                                                    prefixIcon: const Icon(
+                                                      Icons.people,
+                                                      color:
+                                                          AppTheme.primaryColor,
+                                                    ),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.3,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                    focusedBorder: AppTheme
+                                                        .inputBorderActive,
+                                                    filled: true,
+                                                    fillColor: AppTheme
+                                                        .backgroundDark
+                                                        .withValues(alpha: 0.5),
+                                                  ),
+                                                  validator: (val) {
+                                                    if (val == null ||
+                                                        val.trim().isEmpty) {
+                                                      return AppLocalizations.of(
+                                                        context,
+                                                      )!.referralCodeRequired;
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
+                                              ],
                                             ],
                                             if (_isLogin && !_isLoading)
                                               Align(
@@ -724,9 +1066,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                         ScaffoldMessenger.of(
                                                           context,
                                                         ).showSnackBar(
-                                                          const SnackBar(
+                                                          SnackBar(
                                                             content: Text(
-                                                              'Veuillez entrer votre email',
+                                                              AppLocalizations.of(
+                                                                context,
+                                                              )!.pleaseEnterEmail,
                                                             ),
                                                             backgroundColor:
                                                                 Colors.red,
@@ -746,9 +1090,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                           ScaffoldMessenger.of(
                                                             context,
                                                           ).showSnackBar(
-                                                            const SnackBar(
+                                                            SnackBar(
                                                               content: Text(
-                                                                'Email de réinitialisation envoyé',
+                                                                AppLocalizations.of(
+                                                                  context,
+                                                                )!.resetEmailSent,
                                                               ),
                                                               backgroundColor:
                                                                   Colors.green,
@@ -762,7 +1108,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                           ).showSnackBar(
                                                             SnackBar(
                                                               content: Text(
-                                                                'Erreur: $e',
+                                                                '${AppLocalizations.of(context)!.errorPrefix}$e',
                                                               ),
                                                               backgroundColor:
                                                                   Colors.red,
@@ -783,7 +1129,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                               .shrinkWrap,
                                                     ),
                                                     child: Text(
-                                                      'Mot de passe oublié ?',
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.forgotPassword,
                                                       style: TextStyle(
                                                         color: AppTheme
                                                             .primaryColor
@@ -807,7 +1155,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                   ),
                                                 ),
                                               ),
-                                            const SizedBox(height: 16),
+                                            const SizedBox(height: 24),
                                             Container(
                                               width: double.infinity,
                                               height: 56,
@@ -841,27 +1189,22 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                                         ),
                                                   ),
                                                 ),
-                                                child: _isLoading
-                                                    ? const CircularProgressIndicator(
-                                                        color: Colors.white,
-                                                      )
-                                                    : Text(
-                                                        _isLogin
-                                                            ? 'SE CONNECTER'
-                                                            : 'REJOINDRE LA FAMILLE',
-                                                        style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.white,
-                                                          letterSpacing: 1.5,
-                                                        ),
-                                                      ),
+                                                child: Text(
+                                                  _isLogin
+                                                      ? 'SE CONNECTER'
+                                                      : 'REJOINDRE LA FAMILLE',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                    letterSpacing: 1.5,
+                                                  ),
+                                                ),
                                               ),
                                             ),
 
-                                            // Google Login Button removed as per request
-                                            const SizedBox(height: 16),
+                                            // Google Sign In Removed
+                                            const SizedBox(height: 24),
                                             GestureDetector(
                                               onTap: () => setState(
                                                 () => _isLogin = !_isLogin,
@@ -930,6 +1273,89 @@ class _LoginPageState extends ConsumerState<LoginPage>
               );
             },
           ),
+
+          // Confetti Overlay
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: 3.14159 / 2, // down
+              maxBlastForce: 5,
+              minBlastForce: 2,
+              emissionFrequency: 0.05,
+              numberOfParticles: 50,
+              gravity: 0.1,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+              ],
+            ),
+          ),
+
+          // Loading Overlay
+          if (_isLoading)
+            Container(
+              color: Colors.black87,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Circular Progress with Value
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: CircularProgressIndicator(
+                            value: _progressValue,
+                            strokeWidth: 6,
+                            color: AppTheme.primaryColor,
+                            backgroundColor: Colors.white24,
+                          ),
+                        ),
+                        Text(
+                          '${(_progressValue * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Loading Text
+                    Text(
+                      _loadingText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Simple Linear Progress Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 48),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: _progressValue,
+                          backgroundColor: Colors.white24,
+                          color: AppTheme.primaryColor,
+                          minHeight: 6,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

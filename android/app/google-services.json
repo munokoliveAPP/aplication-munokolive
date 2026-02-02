@@ -1,0 +1,82 @@
+{ 
+   "project_info": { 
+     "project_number": "506078346532", 
+     "project_id": "munokolivemusic2026", 
+     "storage_bucket": "munokolivemusic2026.firebasestorage.app" 
+   }, 
+   "client": [ 
+     { 
+       "client_info": { 
+         "mobilesdk_app_id": "1:506078346532:android:6f0e95a11c03b62533c7b1", 
+         "android_client_info": { 
+           "package_name": "com.example.munokolive_gospel" 
+         } 
+       }, 
+       "oauth_client": [ 
+         { 
+           "client_id": "506078346532-b99sc1hk51cbcmsebe89p5umjiacagt9.apps.googleusercontent.com", 
+           "client_type": 3 
+         } 
+       ], 
+       "api_key": [ 
+         { 
+           "current_key": "AIzaSyCDISU6Ilf3RJYb1rt5imGcl42m8l4gG6s" 
+         } 
+       ], 
+       "services": { 
+         "appinvite_service": { 
+           "other_platform_oauth_client": [ 
+             { 
+               "client_id": "506078346532-b99sc1hk51cbcmsebe89p5umjiacagt9.apps.googleusercontent.com", 
+               "client_type": 3 
+             }, 
+             { 
+               "client_id": "506078346532-6d7osbgi7974ofvfmtuklg413l87rpta.apps.googleusercontent.com", 
+               "client_type": 2, 
+               "ios_info": { 
+                 "bundle_id": "munokolivemusic" 
+               } 
+             } 
+           ] 
+         } 
+       } 
+     }, 
+     { 
+       "client_info": { 
+         "mobilesdk_app_id": "1:506078346532:android:e1612a3a87d6703f33c7b1", 
+         "android_client_info": { 
+           "package_name": "com.example.munokolive_music" 
+         } 
+       }, 
+       "oauth_client": [ 
+         { 
+           "client_id": "506078346532-b99sc1hk51cbcmsebe89p5umjiacagt9.apps.googleusercontent.com", 
+           "client_type": 3 
+         } 
+       ], 
+       "api_key": [ 
+         { 
+           "current_key": "AIzaSyCDISU6Ilf3RJYb1rt5imGcl42m8l4gG6s" 
+         } 
+       ], 
+       "services": { 
+         "appinvite_service": { 
+           "other_platform_oauth_client": [ 
+             { 
+               "client_id": "506078346532-b99sc1hk51cbcmsebe89p5umjiacagt9.apps.googleusercontent.com", 
+               "client_type": 3 
+             }, 
+             { 
+               "client_id": "506078346532-6d7osbgi7974ofvfmtuklg413l87rpta.apps.googleusercontent.com", 
+               "client_type": 2, 
+               "ios_info": { 
+                 "bundle_id": "munokolivemusic" 
+               } 
+             } 
+           ] 
+         } 
+       } 
+     } 
+   ], 
+   "configuration_version": "1" 
+ }

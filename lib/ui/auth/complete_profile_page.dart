@@ -1,19 +1,19 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/user_profile.dart';
+import 'package:intl/intl.dart';
+import 'dart:async'; // Add this import
+import '../settings/privacy_policy_page.dart';
 import '../../services/auth_service.dart';
-import '../../services/image_upload_service.dart';
-import '../navigation/main_screen.dart';
-import 'pending_approval_page.dart';
+import '../../providers/user_provider.dart';
 import '../theme/app_theme.dart';
 
-// Provider simple pour le service d'upload
-final imageUploadServiceProvider = Provider((ref) => ImageUploadService());
+import '../../models/user_profile.dart'; // Add this import
+import 'package:munokolive_music/l10n/app_localizations.dart';
 
 class CompleteProfilePage extends ConsumerStatefulWidget {
   final User user;
@@ -24,100 +24,98 @@ class CompleteProfilePage extends ConsumerStatefulWidget {
       _CompleteProfilePageState();
 }
 
-class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage>
-    with TickerProviderStateMixin {
+class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  int _currentStep = 0;
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _churchController = TextEditingController();
+  final _dateController = TextEditingController();
+  final _referralController = TextEditingController();
 
-  // Animation Controllers
-  late AnimationController _backgroundController;
-  late AnimationController _fadeController;
-
-  // Controllers
-  late TextEditingController _firstNameCtrl;
-  late TextEditingController _lastNameCtrl;
-  late TextEditingController _phoneCtrl;
-  late TextEditingController _cityCtrl;
-  late TextEditingController _neighborhoodCtrl;
-  late TextEditingController _communeCtrl;
-  late TextEditingController _churchNameCtrl;
-  late TextEditingController _whatsappCtrl;
-
-  // State
-  String? _selectedCategory;
-  String? _selectedSubCategory;
-  DateTime _dob = DateTime(2000, 1, 1);
-  File? _imageFile;
   bool _isLoading = false;
-  double? _latitude;
-  double? _longitude;
-  bool _isGettingLocation = false;
+  String _loadingStatus = ''; // Added for feedback
+  bool _acceptedPrivacy = false;
+  bool _hasReferrer = false;
+  String _category = 'Chantre & Instrumentiste';
+  String? _subCategory;
+  File? _imageFile;
+  DateTime? _selectedDate;
 
-  // Sponsor
-  UserProfile? _selectedSponsor;
-
-  // Data Lists
   final List<String> _musicienRoles = [
     'Pianiste',
     'Batteur',
-    'Chantre',
-    'Artiste',
-    'Saxophoniste',
     'Bassiste',
     'Guitariste',
-    'Choriste',
-    'Chef de chœur',
+    'Saxophoniste',
+    'Percussionniste',
+    'Violoniste',
+    'Synthétiseur',
+    'Trompettiste',
+    'Flûtiste',
+    'Chantre',
+    'Maître de chœur',
+    'Formateur Musique',
+    'Ingénieur son',
+    'Beatmaker',
   ];
-
-  final List<String> _hommeDeDieuRoles = [
+  final List<String> _ministreRoles = [
     'Pasteur',
     'Prophète',
-    'Apôtre',
+    'Diacre',
     'Évangéliste',
-    'Ministère',
-    'Évêque',
-    'Docteur de la foi',
+    'Docteur',
+    'Apôtre',
   ];
 
   @override
   void initState() {
     super.initState();
-    _backgroundController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat(reverse: true);
+    // Attempt to pre-fill form if profile data exists (even partially)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileState = ref.read(currentUserProfileProvider);
+      if (profileState.hasValue && profileState.value != null) {
+        _populateForm(profileState.value!);
+      }
+    });
+  }
 
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    )..forward();
-
-    _firstNameCtrl = TextEditingController();
-    _lastNameCtrl = TextEditingController();
-    _phoneCtrl = TextEditingController(text: widget.user.phoneNumber);
-    _cityCtrl = TextEditingController();
-    _neighborhoodCtrl = TextEditingController();
-    _communeCtrl = TextEditingController();
-    _churchNameCtrl = TextEditingController();
-    _whatsappCtrl = TextEditingController();
+  void _populateForm(UserProfile profile) {
+    setState(() {
+      _firstNameController.text = profile.firstName;
+      _lastNameController.text = profile.lastName;
+      _churchController.text = profile.churchName ?? '';
+      _category = profile.category.isNotEmpty ? profile.category : _category;
+      _subCategory = profile.subCategory;
+      _hasReferrer = profile.referredBy != null;
+      if (profile.birthDate != null) {
+        _selectedDate = profile.birthDate;
+        _dateController.text = DateFormat(
+          'dd/MM/yyyy',
+        ).format(profile.birthDate!);
+      }
+      // Note: We don't pre-fill photo file from URL, but we could show the URL if we wanted.
+      // For now, if they have a photoUrl, we assume they might want to keep it or change it.
+    });
   }
 
   @override
   void dispose() {
-    _firstNameCtrl.dispose();
-    _lastNameCtrl.dispose();
-    _phoneCtrl.dispose();
-    _cityCtrl.dispose();
-    _neighborhoodCtrl.dispose();
-    _communeCtrl.dispose();
-    _churchNameCtrl.dispose();
-    _whatsappCtrl.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _churchController.dispose();
+    _dateController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800, // Resize large images to reasonable width
+      maxHeight: 800,
+      imageQuality: 70, // Compress quality to reduce size
+    );
 
     if (pickedFile != null) {
       setState(() {
@@ -126,541 +124,747 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage>
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isGettingLocation = true);
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          throw 'Permission de localisation refusée';
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        throw 'Permission de localisation refusée définitivement';
-      }
-
-      final position = await Geolocator.getCurrentPosition();
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(
+        const Duration(days: 365 * 18),
+      ), // ~18 years ago
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: AppTheme.surfaceDark,
+              onSurface: Colors.white,
+            ),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: AppTheme.backgroundDark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
       setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
+        _selectedDate = picked;
+        _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
+    }
+  }
 
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!_acceptedPrivacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.privacyPolicyAccept),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final profileState = ref.read(currentUserProfileProvider);
+    final existingPhotoUrl = profileState.value?.photoUrl;
+
+    if (_imageFile == null &&
+        (existingPhotoUrl == null || existingPhotoUrl.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.photoRequired),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Check file size if it's too big (even after compression, though unlikely)
+    int fileSizeInBytes = await _imageFile!.length();
+    double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+
+    if (fileSizeInMB > 2) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.optimizingPhoto),
+          backgroundColor: AppTheme.primaryColor,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
+    // Validate Referral Code if entered manually
+    if (!_hasReferrer && _referralController.text.trim().isNotEmpty) {
+      final code = _referralController.text.trim();
+      final auth = ref.read(authServiceProvider);
+      final referrerId = await auth.validateReferralCode(code);
+
+      if (referrerId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invalidReferralCode),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+      // Note: We pass the code to updateUserProfile, which handles the logic.
+      // Ideally we should pass the UUID if updateUserProfile supported it,
+      // but currently it takes the code string for RPC.
+      // We'll trust the validation here.
+    }
+
+    setState(() {
+      _isLoading = true;
+      _loadingStatus = AppLocalizations.of(context)!.statusPreparing;
+    });
+
+    // Timer to warn user if connection is slow
+    Timer? slowConnectionTimer;
+    slowConnectionTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && _isLoading) {
+        setState(() {
+          _loadingStatus = AppLocalizations.of(context)!.optimizingNetwork;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.slowConnectionMessage),
+            duration: const Duration(seconds: 4),
+            backgroundColor: AppTheme.primaryColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
+    try {
+      final auth = ref.read(authServiceProvider);
+      String? photoUrl;
+
+      // Upload Photo concurrently if possible, or just sequential for safety
+      if (_imageFile != null) {
+        setState(
+          () => _loadingStatus = AppLocalizations.of(context)!.uploadingPhoto,
+        );
+        photoUrl = await auth.uploadProfileImage(widget.user.id, _imageFile!);
+      }
+
+      // If photo upload failed but we have a file, we might want to warn user,
+      // but user asked to enter home directly.
+      // We proceed even if photoUrl is null (upload failed or timed out).
+
+      setState(
+        () => _loadingStatus = AppLocalizations.of(context)!.savingProfile,
+      );
+
+      await auth.updateUserProfile(
+        userId: widget.user.id,
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        category: _category,
+        subCategory: _subCategory,
+        churchName: _churchController.text.trim(),
+        photoUrl: photoUrl,
+        birthDate: _selectedDate,
+        referredBy: _referralController.text.trim().isNotEmpty
+            ? _referralController.text.trim()
+            : null,
+      );
+
+      setState(() => _loadingStatus = AppLocalizations.of(context)!.finished);
+
+      // Refresh profile to trigger navigation in main.dart
+      ref.invalidate(currentUserProfileProvider);
+
+      // Small delay to allow state propagation
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Position récupérée avec succès!')),
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.errorPrefix}$e'),
+            backgroundColor: Colors.red,
+          ),
         );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erreur de localisation: $e')));
+        setState(() {
+          _isLoading = false;
+          _loadingStatus = '';
+        });
       }
     } finally {
-      if (mounted) {
-        setState(() => _isGettingLocation = false);
+      slowConnectionTimer.cancel();
+      if (mounted && _isLoading) {
+        setState(() {
+          _isLoading = false;
+          _loadingStatus = '';
+        });
       }
     }
-  }
-
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez remplir tous les champs obligatoires'),
-        ),
-      );
-      return;
-    }
-
-    if (_imageFile == null && widget.user.photoURL == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez ajouter une photo de profil')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      String? photoUrl = widget.user.photoURL;
-
-      // Upload image if selected
-      if (_imageFile != null) {
-        try {
-          photoUrl = await ref
-              .read(imageUploadServiceProvider)
-              .uploadProfileImage(widget.user.uid, _imageFile!);
-        } catch (e) {
-          debugPrint('Erreur upload image: $e');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Attention: Impossible de télécharger la photo ($e). Le profil sera enregistré sans photo.',
-                ),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 4),
-              ),
-            );
-          }
-          // On continue sans la nouvelle photo (garde l'ancienne ou null)
-        }
-      }
-
-      // Check for admin email or existing status
-      String status = 'pending';
-      if (widget.user.email == 'munokolive@gmail.com') {
-        status = 'validated_admin'; // Force validated_admin for super admin
-      } else {
-        // Preserve existing status if valid
-        final currentProfile = await ref
-            .read(authServiceProvider)
-            .getUserProfile(widget.user.uid);
-        if (currentProfile != null &&
-            (currentProfile.status == 'active' ||
-                currentProfile.status == 'admin' ||
-                currentProfile.status == 'validated_admin')) {
-          status = currentProfile.status;
-        }
-      }
-
-      final profile = UserProfile(
-        uid: widget.user.uid,
-        firstName: _firstNameCtrl.text.trim(),
-        lastName: _lastNameCtrl.text.trim(),
-        email: widget.user.email,
-        dateOfBirth: _dob,
-        category: _selectedCategory ?? 'Membre',
-        subCategory: _selectedSubCategory,
-        phone: _phoneCtrl.text.trim(),
-        whatsappNumber: _whatsappCtrl.text.trim().isNotEmpty
-            ? _whatsappCtrl.text.trim()
-            : null,
-        city: _cityCtrl.text.trim(),
-        neighborhood: _neighborhoodCtrl.text.trim(),
-        commune: _communeCtrl.text.trim(),
-        churchName: _churchNameCtrl.text.trim(),
-        availabilityStatus: 'available', // Default
-        latitude: _latitude,
-        longitude: _longitude,
-        sponsorId: _selectedSponsor?.uid,
-        sponsorName: _selectedSponsor != null
-            ? '${_selectedSponsor!.firstName} ${_selectedSponsor!.lastName}'
-            : null,
-        status: status,
-        photoUrl: photoUrl,
-        createdAt: DateTime.now(), // Seniority timestamp
-      );
-
-      // Update profile
-      await ref.read(authServiceProvider).updateUserProfile(profile);
-
-      if (!mounted) return;
-
-      // Navigate based on status
-      if (status == 'active' ||
-          status == 'admin' ||
-          status == 'validated_admin') {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-          (route) => false,
-        );
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const PendingApprovalPage()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  void _nextStep() {
-    if (_currentStep == 0 && _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez sélectionner une catégorie')),
-      );
-      return;
-    }
-    if (_currentStep == 1 && _selectedSubCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez sélectionner votre rôle')),
-      );
-      return;
-    }
-    setState(() => _currentStep++);
-  }
-
-  void _prevStep() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-    }
-  }
-
-  InputDecoration _buildInputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: AppTheme.textSecondary),
-      prefixIcon: Icon(icon, color: AppTheme.primaryColor),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: AppTheme.inputBorder.withValues(alpha: 0.3),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppTheme.inputBorderActive),
-      ),
-      filled: true,
-      fillColor: AppTheme.backgroundDark.withValues(alpha: 0.5),
-      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Profil MunokoLive'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
       body: Stack(
         children: [
-          // Animated Background
-          AnimatedBuilder(
-            animation: _backgroundController,
-            builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.backgroundGradientStart,
-                      AppTheme.backgroundDark,
-                      AppTheme.backgroundGradientStart.withValues(
-                        alpha: 0.5 + 0.5 * _backgroundController.value,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-
-          // Floating Orbs (Subtle)
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                    blurRadius: 80,
-                    spreadRadius: 20,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.secondaryColor.withValues(alpha: 0.15),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.secondaryColor.withValues(alpha: 0.15),
-                    blurRadius: 60,
-                    spreadRadius: 20,
-                  ),
+          // Simple Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.backgroundGradientStart,
+                  AppTheme.backgroundDark,
                 ],
               ),
             ),
           ),
 
-          // Main Content
-          SafeArea(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryColor,
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppTheme.textPrimary.withValues(alpha: 0.1),
+                      width: 1,
                     ),
-                  )
-                : Column(
-                    children: [
-                      // Progress Indicator
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0,
-                          vertical: 16.0,
-                        ),
-                        child: Column(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: (_currentStep + 1) / 4,
-                                backgroundColor: AppTheme.textPrimary
-                                    .withValues(alpha: 0.1),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  AppTheme.primaryColor,
-                                ),
-                                minHeight: 8,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Étape ${_currentStep + 1} sur 4',
-                              style: TextStyle(
-                                color: AppTheme.textSecondary.withValues(
-                                  alpha: 0.8,
-                                ),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(24),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(24),
-                                child: FadeTransition(
-                                  opacity: _fadeController,
-                                  child: Form(
-                                    key: _formKey,
-                                    child: _buildStepContent(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Navigation Buttons
-                      Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Row(
-                          children: [
-                            if (_currentStep > 0)
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: _prevStep,
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppTheme.textPrimary,
-                                    side: BorderSide(
-                                      color: AppTheme.textPrimary.withValues(
-                                        alpha: 0.3,
+                    color: Colors.black.withValues(alpha: 0.3),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Photo Upload
+                              GestureDetector(
+                                onTap: _pickImage,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppTheme.surfaceDark,
+                                        border: Border.all(
+                                          color: AppTheme.primaryColor,
+                                          width: 2,
+                                        ),
+                                        image: _imageFile != null
+                                            ? DecorationImage(
+                                                image: FileImage(_imageFile!),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
                                       ),
+                                      child: _imageFile == null
+                                          ? const Icon(
+                                              Icons.add_a_photo,
+                                              size: 40,
+                                              color: Colors.white70,
+                                            )
+                                          : null,
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  child: const Text('Retour'),
-                                ),
-                              ),
-                            if (_currentStep > 0) const SizedBox(width: 16),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: AppTheme.buttonGradient,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.4,
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: const BoxDecoration(
+                                          color: AppTheme.primaryColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.edit,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                child: ElevatedButton(
-                                  onPressed: _currentStep == 3
-                                      ? _saveProfile
-                                      : _nextStep,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    foregroundColor: Colors.white,
-                                    shadowColor: Colors.transparent,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.completeProfileTitle,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.completeProfileSubtitle,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 32),
+
+                              // First Name
+                              TextFormField(
+                                controller: _firstNameController,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: _buildInputDecoration(
+                                  AppLocalizations.of(context)!.firstNameLabel,
+                                  const Icon(
+                                    Icons.person,
+                                    color: AppTheme.primaryColor,
                                   ),
-                                  child: Text(
-                                    _currentStep == 3 ? 'TERMINER' : 'SUIVANT',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      letterSpacing: 1,
+                                ),
+                                validator: (v) => v?.isEmpty ?? true
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.firstNameRequired
+                                    : null,
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Last Name
+                              TextFormField(
+                                controller: _lastNameController,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: _buildInputDecoration(
+                                  AppLocalizations.of(context)!.lastNameLabel,
+                                  const Icon(
+                                    Icons.person_outline,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                validator: (v) => v?.isEmpty ?? true
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.lastNameRequired
+                                    : null,
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Date of Birth
+                              GestureDetector(
+                                onTap: () => _selectDate(context),
+                                child: AbsorbPointer(
+                                  child: TextFormField(
+                                    controller: _dateController,
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: _buildInputDecoration(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.birthDateLabel,
+                                      const Icon(
+                                        Icons.calendar_today,
+                                        color: AppTheme.primaryColor,
+                                      ),
                                     ),
+                                    validator: (v) => v?.isEmpty ?? true
+                                        ? AppLocalizations.of(
+                                            context,
+                                          )!.birthDateRequired
+                                        : null,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+
+                              // Church
+                              TextFormField(
+                                controller: _churchController,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: _buildInputDecoration(
+                                  AppLocalizations.of(context)!.churchLabel,
+                                  const Icon(
+                                    Icons.church,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                validator: (v) => v?.isEmpty ?? true
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.churchRequired
+                                    : null,
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Referral Code (Obligatoire si pas de parrain)
+                              TextFormField(
+                                controller: _referralController,
+                                readOnly: _hasReferrer,
+                                style: TextStyle(
+                                  color: _hasReferrer
+                                      ? Colors.greenAccent
+                                      : Colors.white,
+                                ),
+                                decoration: _buildInputDecoration(
+                                  _hasReferrer
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.referralCodeActive
+                                      : AppLocalizations.of(
+                                          context,
+                                        )!.referralCodeMandatory,
+                                  Icon(
+                                    Icons.star,
+                                    color: _hasReferrer
+                                        ? Colors.green
+                                        : AppTheme.primaryColor,
+                                  ),
+                                ),
+                                validator: (v) {
+                                  if (_hasReferrer) return null;
+                                  return v?.trim().isEmpty ?? true
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.referralCodeRequired
+                                      : null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Category
+                              _buildCategoryCard(
+                                title: AppLocalizations.of(context)!.musician,
+                                iconWidget: Image.asset(
+                                  'assets/Logo.png',
+                                  width: 28,
+                                  height: 28,
+                                  color: _category == 'Chantre & Instrumentiste'
+                                      ? Colors.white
+                                      : Colors.white70,
+                                ),
+                                isSelected:
+                                    _category == 'Chantre & Instrumentiste',
+                                onTap: () => setState(() {
+                                  _category = 'Chantre & Instrumentiste';
+                                  _subCategory = null;
+                                }),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildCategoryCard(
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.servantOfGod,
+                                iconWidget: Icon(
+                                  Icons.church,
+                                  color: _category == 'Homme de Dieu'
+                                      ? Colors.white
+                                      : Colors.white70,
+                                  size: 28,
+                                ),
+                                isSelected: _category == 'Homme de Dieu',
+                                onTap: () => setState(() {
+                                  _category = 'Homme de Dieu';
+                                  _subCategory = null;
+                                }),
+                              ),
+
+                              if (_category == 'Chantre & Instrumentiste' ||
+                                  _category == 'Homme de Dieu') ...[
+                                const SizedBox(height: 16),
+                                DropdownButtonFormField<String>(
+                                  key: ValueKey(_category),
+                                  initialValue: _subCategory,
+                                  dropdownColor: AppTheme.surfaceDark,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: _buildInputDecoration(
+                                    _category == 'Chantre & Instrumentiste'
+                                        ? AppLocalizations.of(
+                                            context,
+                                          )!.instrumentOrRole
+                                        : AppLocalizations.of(
+                                            context,
+                                          )!.ministry,
+                                    _category == 'Chantre & Instrumentiste'
+                                        ? Padding(
+                                            padding: const EdgeInsets.all(12.0),
+                                            child: Image.asset(
+                                              'assets/Logo.png',
+                                              width: 24,
+                                              height: 24,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.star,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                  ),
+                                  items:
+                                      (_category == 'Chantre & Instrumentiste'
+                                              ? _musicienRoles
+                                              : _ministreRoles)
+                                          .map(
+                                            (c) => DropdownMenuItem(
+                                              value: c,
+                                              child: Text(
+                                                _getLocalizedRole(context, c),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                  onChanged: (val) =>
+                                      setState(() => _subCategory = val),
+                                  validator: (val) => val == null
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.selectionRequired
+                                      : null,
+                                ),
+                              ],
+
+                              const SizedBox(height: 16),
+
+                              const SizedBox(height: 24),
+
+                              // Privacy Checkbox
+                              CheckboxListTile(
+                                value: _acceptedPrivacy,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _acceptedPrivacy = val ?? false;
+                                  });
+                                },
+                                title: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PrivacyPolicyPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: AppLocalizations.of(
+                                            context,
+                                          )!.readAndAccept,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: AppLocalizations.of(
+                                            context,
+                                          )!.privacyPolicy,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            decoration:
+                                                TextDecoration.underline,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: AppLocalizations.of(
+                                            context,
+                                          )!.ofAppByAuthor,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                activeColor: AppTheme.primaryColor,
+                                checkColor: Colors.white,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              _loadingStatus,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Text(
+                                          AppLocalizations.of(context)!.save,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStepContent() {
-    switch (_currentStep) {
-      case 0:
-        return _buildCategoryStep();
-      case 1:
-        return _buildSubCategoryStep();
-      case 2:
-        return _buildPersonalInfoStep();
-      case 3:
-        return _buildFinalStep();
+  String _getLocalizedRole(BuildContext context, String role) {
+    final loc = AppLocalizations.of(context)!;
+    switch (role) {
+      case 'Pianiste':
+        return loc.rolePianist;
+      case 'Batteur':
+        return loc.roleDrummer;
+      case 'Bassiste':
+        return loc.roleBassist;
+      case 'Guitariste':
+        return loc.roleGuitarist;
+      case 'Saxophoniste':
+        return loc.roleSaxophonist;
+      case 'Percussionniste':
+        return loc.rolePercussionist;
+      case 'Violoniste':
+        return loc.roleViolinist;
+      case 'Synthétiseur':
+        return loc.roleSynthesizer;
+      case 'Trompettiste':
+        return loc.roleTrumpeter;
+      case 'Flûtiste':
+        return loc.roleFlutist;
+      case 'Chantre':
+        return loc.roleSinger;
+      case 'Maître de chœur':
+        return loc.roleChoirMaster;
+      case 'Formateur Musique':
+        return loc.roleMusicTrainer;
+      case 'Ingénieur son':
+        return loc.roleSoundEngineer;
+      case 'Beatmaker':
+        return loc.roleBeatmaker;
+      case 'Pasteur':
+        return loc.rolePastor;
+      case 'Prophète':
+        return loc.roleProphet;
+      case 'Diacre':
+        return loc.roleDeacon;
+      case 'Évangéliste':
+        return loc.roleEvangelist;
+      case 'Docteur':
+        return loc.roleDoctor;
+      case 'Apôtre':
+        return loc.roleApostle;
       default:
-        return Container();
+        return role;
     }
   }
 
-  Widget _buildCategoryStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Qui êtes-vous ?",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          "Sélectionnez votre catégorie principale pour continuer.",
-          style: TextStyle(color: AppTheme.textSecondary),
-        ),
-        const SizedBox(height: 32),
-        _buildCategoryCard(
-          title: "Musicien",
-          icon: Icons.music_note,
-          isSelected: _selectedCategory == 'Musicien',
-          onTap: () => setState(() => _selectedCategory = 'Musicien'),
-        ),
-        const SizedBox(height: 16),
-        _buildCategoryCard(
-          title: "Homme de Dieu",
-          icon: Icons.church,
-          isSelected: _selectedCategory == 'Homme de Dieu',
-          onTap: () => setState(() => _selectedCategory = 'Homme de Dieu'),
-        ),
-      ],
+  InputDecoration _buildInputDecoration(String label, Widget prefixIcon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.05),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppTheme.primaryColor),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
   Widget _buildCategoryCard({
     required String title,
-    required IconData icon,
+    required Widget iconWidget,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.all(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primaryColor.withValues(alpha: 0.2)
-              : AppTheme.backgroundLight.withValues(alpha: 0.1),
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? AppTheme.primaryColor
-                : Colors.white.withValues(alpha: 0.1),
+            color: isSelected ? AppTheme.primaryColor : Colors.transparent,
             width: 2,
           ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                blurRadius: 15,
-                spreadRadius: 2,
-              ),
-          ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.primaryColor
-                    : Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? Colors.white : AppTheme.textSecondary,
-                size: 28,
-              ),
-            ),
+            iconWidget,
             const SizedBox(width: 16),
             Text(
               title,
               style: TextStyle(
-                fontSize: 18,
+                color: isSelected ? Colors.white : Colors.white70,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : AppTheme.textPrimary,
               ),
             ),
             const Spacer(),
@@ -669,388 +873,6 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSubCategoryStep() {
-    final List<String> roles = _selectedCategory == 'Musicien'
-        ? _musicienRoles
-        : _hommeDeDieuRoles;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Quel est votre rôle ?",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Sélectionnez votre spécialité en tant que $_selectedCategory.",
-          style: const TextStyle(color: AppTheme.textSecondary),
-        ),
-        const SizedBox(height: 32),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: roles.map((role) {
-            final isSelected = _selectedSubCategory == role;
-            return ChoiceChip(
-              label: Text(role),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() => _selectedSubCategory = selected ? role : null);
-              },
-              selectedColor: AppTheme.primaryColor,
-              labelStyle: TextStyle(
-                color: isSelected ? AppTheme.textPrimary : AppTheme.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-              backgroundColor: AppTheme.backgroundLight,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected
-                      ? AppTheme.primaryColor
-                      : AppTheme.secondaryColor.withValues(alpha: 0.5),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPersonalInfoStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Informations Personnelles",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _firstNameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: _buildInputDecoration(
-                  'Prénom',
-                  Icons.person_outline,
-                ),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _lastNameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: _buildInputDecoration('Nom', Icons.person),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        InkWell(
-          onTap: () async {
-            final d = await showDatePicker(
-              context: context,
-              initialDate: _dob,
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-              builder: (context, child) {
-                return Theme(
-                  data: AppTheme.darkTheme.copyWith(
-                    colorScheme: const ColorScheme.dark(
-                      primary: AppTheme.primaryColor,
-                      onPrimary: Colors.white,
-                      surface: AppTheme.backgroundLight,
-                      onSurface: AppTheme.textPrimary,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (d != null) setState(() => _dob = d);
-          },
-          child: InputDecorator(
-            decoration: _buildInputDecoration(
-              'Date de naissance',
-              Icons.calendar_today,
-            ),
-            child: Text(
-              '${_dob.day}/${_dob.month}/${_dob.year}',
-              style: const TextStyle(fontSize: 16, color: Colors.white),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _cityCtrl,
-          style: const TextStyle(color: Colors.white),
-          decoration: _buildInputDecoration('Ville', Icons.location_city),
-          validator: (v) => v!.isEmpty ? 'Requis' : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _communeCtrl,
-          style: const TextStyle(color: Colors.white),
-          decoration: _buildInputDecoration('Commune', Icons.map),
-          validator: (v) => v!.isEmpty ? 'Requis' : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _neighborhoodCtrl,
-          style: const TextStyle(color: Colors.white),
-          decoration: _buildInputDecoration('Quartier', Icons.home_work),
-          validator: (v) => v!.isEmpty ? 'Requis' : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _churchNameCtrl,
-          style: const TextStyle(color: Colors.white),
-          decoration: _buildInputDecoration("Nom de l'église", Icons.church),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppTheme.backgroundDark.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.inputBorder.withValues(alpha: 0.3),
-            ),
-          ),
-          child: TextButton.icon(
-            onPressed: _isGettingLocation ? null : _getCurrentLocation,
-            icon: _isGettingLocation
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppTheme.primaryColor,
-                    ),
-                  )
-                : const Icon(Icons.my_location),
-            label: Text(
-              _latitude != null
-                  ? 'Position actuelle acquise'
-                  : 'Utiliser ma position actuelle',
-              style: TextStyle(
-                color: _latitude != null ? Colors.green : AppTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              foregroundColor: AppTheme.primaryColor,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFinalStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Derniers détails",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Center(
-          child: GestureDetector(
-            onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 60,
-              backgroundColor: AppTheme.backgroundLight,
-              backgroundImage: _imageFile != null
-                  ? FileImage(_imageFile!)
-                  : (widget.user.photoURL != null
-                            ? NetworkImage(widget.user.photoURL!)
-                            : null)
-                        as ImageProvider?,
-              child: (_imageFile == null && widget.user.photoURL == null)
-                  ? const Icon(
-                      Icons.add_a_photo,
-                      size: 40,
-                      color: AppTheme.textSecondary,
-                    )
-                  : null,
-            ),
-          ),
-        ),
-        const Center(
-          child: Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Text(
-              'Photo de profil',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        TextFormField(
-          controller: _phoneCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Téléphone (Appels)',
-            prefixIcon: Icon(Icons.phone),
-          ),
-          keyboardType: TextInputType.phone,
-          validator: (v) => v!.isEmpty ? 'Requis' : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _whatsappCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Numéro WhatsApp (Optionnel)',
-            prefixIcon: Icon(Icons.chat),
-            helperText: "Pour recevoir des demandes directes",
-          ),
-          keyboardType: TextInputType.phone,
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          "Parrainage (Qui vous a invité ?)",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return Autocomplete<UserProfile>(
-              optionsBuilder: (TextEditingValue textEditingValue) async {
-                if (textEditingValue.text.length < 2) {
-                  return const Iterable<UserProfile>.empty();
-                }
-                return await ref
-                    .read(authServiceProvider)
-                    .searchUsers(textEditingValue.text);
-              },
-              displayStringForOption: (UserProfile option) =>
-                  '${option.firstName} ${option.lastName}',
-              onSelected: (UserProfile selection) {
-                setState(() => _selectedSponsor = selection);
-              },
-              fieldViewBuilder:
-                  (
-                    context,
-                    textEditingController,
-                    focusNode,
-                    onFieldSubmitted,
-                  ) {
-                    return TextFormField(
-                      controller: textEditingController,
-                      focusNode: focusNode,
-                      style: const TextStyle(color: Colors.white),
-                      decoration:
-                          _buildInputDecoration(
-                            'Rechercher un parrain',
-                            Icons.person_search,
-                          ).copyWith(
-                            suffixIcon: _selectedSponsor != null
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.clear,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedSponsor = null;
-                                      });
-                                      textEditingController.clear();
-                                    },
-                                  )
-                                : null,
-                          ),
-                      onFieldSubmitted: (String value) {
-                        onFieldSubmitted();
-                      },
-                    );
-                  },
-              optionsViewBuilder: (context, onSelected, options) {
-                return Align(
-                  alignment: Alignment.topLeft,
-                  child: Material(
-                    elevation: 4.0,
-                    color: AppTheme.backgroundDark,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: AppTheme.inputBorder.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Container(
-                      width: constraints.maxWidth,
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: options.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final UserProfile option = options.elementAt(index);
-                          return InkWell(
-                            onTap: () => onSelected(option),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${option.firstName} ${option.lastName}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    option.category,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ],
     );
   }
 }

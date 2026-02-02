@@ -1,25 +1,22 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For HapticFeedback
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../services/auth_service.dart';
-import '../../services/georadar_service.dart';
-import '../../services/notification_service.dart';
-import '../../services/notification_listener_service.dart';
-import '../../services/geofence_service.dart';
-import '../../providers/app_state_providers.dart';
-import '../../providers/user_provider.dart'; // Import user_provider
+import 'package:munokolive_music/providers/navigation_provider.dart';
+import 'package:munokolive_music/ui/home/home_screen.dart';
+import 'package:munokolive_music/ui/map/map_screen.dart';
+import 'package:munokolive_music/ui/theme/app_theme.dart';
+import 'package:munokolive_music/ui/widgets/offline_banner.dart';
+import 'package:munokolive_music/providers/user_provider.dart';
+import 'package:munokolive_music/ui/contacts/contacts_page.dart';
+import 'package:munokolive_music/ui/places/places_page.dart';
+import 'package:munokolive_music/ui/events/events_page.dart';
 
-// Screens
-import '../home/home_screen.dart'; // Accueil
-import '../map/map_widget.dart'; // Radar
-import '../places/places_screen.dart'; // Lieu
-import '../contacts/contacts_screen.dart'; // Contact
-import '../events/events_screen.dart'; // Événement
-import '../theme/app_theme.dart';
+import 'package:munokolive_music/services/engagement_service.dart';
+import 'package:munokolive_music/ui/chat/salon_chat_page.dart';
+import 'package:munokolive_music/ui/profile/view_profile_page.dart';
+import 'package:munokolive_music/providers/presence_provider.dart';
+import 'package:munokolive_music/l10n/app_localizations.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -29,241 +26,122 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
-  StreamSubscription<Position>? _positionStream;
-
-  // 5 Menus requested by user
-  final List<Widget> _screens = [
-    const HomeScreen(), // 0: ACCUEIL
-    const MapWidget(), // 1: RADAR (Carte)
-    const PlacesScreen(), // 2: LIEU
-    const ContactsScreen(), // 3: CONTACT
-    const EventsScreen(), // 4: ÉVÉNEMENT
-  ];
+  bool _welcomeShown = false;
 
   @override
   void initState() {
     super.initState();
-    _checkAndStartTracking();
-
-    // Start listening for notifications (SOS, etc.)
+    // Initialize Global Presence Tracking
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationListenerProvider).startListening();
-      ref.read(geofenceServiceProvider).startMonitoring(); // Start Geofencing
-
-      // Listen for notification taps
-      ref.read(notificationServiceProvider).onNotificationTap.listen((payload) {
-        if (payload != null) {
-          _handleNotificationTap(payload);
-        }
-      });
+      ref.read(presenceControllerProvider.notifier).init();
+      // Initialize Engagement Engine (Notifications)
+      ref.read(engagementEngineProvider);
     });
   }
 
-  void _handleNotificationTap(String payload) {
-    if (payload.startsWith('sos:')) {
-      // Switch to Map tab (Radar)
-      ref.read(bottomNavIndexProvider.notifier).state = 1;
-
-      final sosId = payload.split(':')[1];
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Affichage de l\'alerte SOS #$sosId sur la carte...'),
+  void _handleDeepLink(BuildContext context, DeepLinkTarget target) {
+    if (target.type == 'salon') {
+      final isMusicos = target.id == 'musicos';
+      // Navigate to Salon
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SalonChatPage(
+            salonId: target.id,
+            salonTitle: isMusicos
+                ? AppLocalizations.of(context)!.musiciansSalon
+                : AppLocalizations.of(context)!.pastorsSalon,
+            themeColor: isMusicos ? Colors.cyanAccent : Colors.amber,
+          ),
         ),
       );
-      // Logic to center map on SOS would go here (via provider)
-    } else if (payload == 'message') {
-      // Switch to Contacts tab
-      ref.read(bottomNavIndexProvider.notifier).state = 3;
-    } else if (payload.startsWith('birthday_wish')) {
-      // Switch to Contacts tab for Birthday
-      ref.read(bottomNavIndexProvider.notifier).state = 3;
-      // Ideally switch to "Anniversaires" tab within ContactsScreen,
-      // but that requires more complex state management.
-      // The Halo header is visible in the main list too (as implemented in ContactsScreen).
-
-      if (payload.contains('action=wish')) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Dites-leur joyeux anniversaire !'),
-            backgroundColor: Color(0xFFFFD700),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } else if (payload.startsWith('event:')) {
-      // Switch to Events tab
-      ref.read(bottomNavIndexProvider.notifier).state = 4;
-    }
-  }
-
-  @override
-  void dispose() {
-    _positionStream?.cancel();
-    // Use read directly might be unsafe in dispose if provider is already disposed,
-    // but typically safe for singletons/kept alive providers.
-    // However, it's better to rely on autoDispose or manual cleanup if possible.
-    // For now, we assume MainScreen is the root.
-    super.dispose();
-  }
-
-  Future<void> _checkAndStartTracking() async {
-    final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.whileInUse ||
-        permission == LocationPermission.always) {
-      _startLocationUpdates();
-    }
-  }
-
-  Future<void> _startLocationUpdates() async {
-    final user = ref.read(authServiceProvider).currentUser;
-    if (user == null) return;
-
-    try {
-      final profile = await ref
-          .read(authServiceProvider)
-          .getUserProfile(user.uid);
-      if (profile == null) return;
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
-
-      const locationSettings = LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 50, // Update every 50 meters
+    } else if (target.type == 'message_prive') {
+      // Navigate to User Profile or Chat (assuming ViewProfilePage has chat button)
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ViewProfilePage(userId: target.id),
+        ),
       );
-
-      _positionStream =
-          Geolocator.getPositionStream(
-            locationSettings: locationSettings,
-          ).listen((Position position) {
-            // Update Global State
-            ref.read(userLocationProvider.notifier).state = position;
-
-            // Update Backend/Radar Service
-            ref
-                .read(geoRadarServiceProvider)
-                .updateUserLocation(
-                  profile,
-                  GeoPoint(position.latitude, position.longitude),
-                );
-          });
-    } catch (e) {
-      debugPrint('Error tracking location: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Schedule Birthday Notifications when users are loaded
-    ref.listen(allUsersProvider, (previous, next) {
-      next.whenData((users) {
-        ref
-            .read(notificationServiceProvider)
-            .scheduleBirthdayNotifications(users);
-      });
+    final navigation = ref.watch(navigationProvider);
+
+    // Listen for Deep Links
+    ref.listen<DeepLinkTarget?>(pendingNavigationProvider, (prev, next) {
+      if (next != null) {
+        _handleDeepLink(context, next);
+        // Reset state
+        ref.read(pendingNavigationProvider.notifier).state = null;
+      }
     });
 
-    final currentIndex = ref.watch(bottomNavIndexProvider);
-    final badgeState = ref.watch(badgeStateProvider);
+    // Welcome "Surprise" for Super Admin
+    ref.listen(currentUserProfileProvider, (previous, next) {
+      if (!_welcomeShown && next.hasValue && next.value != null) {
+        final profile = next.value!;
+        if (profile.role == 'admin' &&
+            profile.email == 'munokolive@gmail.com') {
+          _welcomeShown = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.welcomeSuperAdmin,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: Colors.amber[700],
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+          });
+        }
+      }
+    });
+
+    final List<Widget> screens = [
+      const HomeScreen(),
+      const EventsPage(), // Events (New!)
+      const MapScreen(), // Map/Radar
+      const ContactsPage(), // Contacts
+      const PlacesPage(), // Nos Lieux
+    ];
 
     return Scaffold(
-      extendBody: true,
-      // Use IndexedStack for Keep-Alive State
-      body: IndexedStack(index: currentIndex, children: _screens),
-      floatingActionButton: null,
-      bottomNavigationBar: CurvedNavigationBar(
-        key: _bottomNavigationKey,
-        index: currentIndex,
-        height: 60.0,
-        color: AppTheme.backgroundLight.withValues(alpha: 0.95),
-        backgroundColor: Colors.transparent,
-        buttonBackgroundColor: AppTheme.primaryColor,
-        animationDuration: const Duration(milliseconds: 300),
-        items: <Widget>[
-          const Icon(
-            Icons.home,
-            size: 30,
-            color: AppTheme.textPrimary,
-          ), // Accueil
-
-          const Icon(
-            Icons.radar,
-            size: 30,
-            color: AppTheme.textPrimary,
-          ), // Radar
-
-          const Icon(
-            Icons.place,
-            size: 30,
-            color: AppTheme.textPrimary,
-          ), // Lieu
-          // Contact (with Badge)
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.contacts, size: 30, color: AppTheme.textPrimary),
-              if (badgeState.contactsOnline > 0)
-                Positioned(
-                  top: -5,
-                  right: -5,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '${badgeState.contactsOnline}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          // Événement (with Badge)
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.event, size: 30, color: AppTheme.textPrimary),
-              if (badgeState.eventsNearby > 0)
-                Positioned(
-                  top: -5,
-                  right: -5,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '${badgeState.eventsNearby}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+      backgroundColor: const Color(0xFF2D0036), // Match image background
+      extendBody: true, // Important for curved bar transparency effect
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: screens[navigation.currentIndex]),
         ],
-        onTap: (index) {
-          // Haptic Feedback for Menu Change
-          HapticFeedback.lightImpact();
-
-          // Update Provider
-          ref.read(bottomNavIndexProvider.notifier).state = index;
-        },
+      ),
+      bottomNavigationBar: CurvedNavigationBar(
+        index: navigation.currentIndex,
+        height: 75.0, // Hauteur ajustée pour la Safe Area et visibilité
+        items: const <Widget>[
+          Icon(Icons.home, size: 30, color: Colors.white),
+          Icon(Icons.event, size: 30, color: Colors.white),
+          Icon(Icons.radar, size: 30, color: Colors.white),
+          Icon(Icons.people_alt, size: 30, color: Colors.white),
+          Icon(Icons.location_on, size: 30, color: Colors.white),
+        ],
+        color: const Color(
+          0xFF1A0020,
+        ).withValues(alpha: 0.9), // Plus opaque pour lisibilité
+        buttonBackgroundColor: AppTheme.primaryColor,
+        backgroundColor: Colors.transparent,
+        animationCurve: Curves.easeInOut,
+        animationDuration: const Duration(milliseconds: 300),
+        onTap: (index) => navigation.setIndex(index),
+        letIndexChange: (index) => true,
       ),
     );
   }

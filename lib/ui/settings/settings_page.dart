@@ -1,16 +1,26 @@
-// ignore_for_file: deprecated_member_use
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
-import '../admin/admin_dashboard_page.dart';
-import '../profile/user_profile_page.dart';
-import 'privacy_settings_page.dart';
+import 'package:munokolive_music/ui/admin/super_admin_dashboard.dart';
+import '../profile/edit_profile_page.dart';
 import 'help_support_page.dart';
 import 'about_page.dart';
+import 'cgu_page.dart';
+import 'privacy_policy_page.dart';
 import '../../services/auth_service.dart';
+import '../../providers/user_provider.dart';
+import 'package:munokolive_music/providers/theme_provider.dart';
+import 'package:munokolive_music/providers/locale_provider.dart';
+import 'package:munokolive_music/ui/settings/change_password_page.dart';
+import 'package:munokolive_music/ui/profile/my_services_page.dart';
+import 'package:munokolive_music/ui/booking/bookings_list_page.dart';
+import 'package:munokolive_music/ui/onboarding/onboarding_screen.dart'; // Added
+import 'package:munokolive_music/ui/widgets/animated_counter.dart'; // Added
+import 'package:munokolive_music/l10n/app_localizations.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -36,11 +46,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _loadSettings() async {
     _prefs = await SharedPreferences.getInstance();
+    // Sync local state with ThemeProvider
+    final isDark = ref.read(themeProvider.notifier).isDarkMode;
+    // Sync local state with LocaleProvider
+    final languageName = ref.read(localeProvider.notifier).getDisplayName();
+
     setState(() {
       _notificationsEnabled = _prefs.getBool('notifications_enabled') ?? true;
       _biometricsEnabled = _prefs.getBool('biometrics_enabled') ?? false;
-      _darkModeEnabled = _prefs.getBool('dark_mode_enabled') ?? true;
-      _selectedLanguage = _prefs.getString('language') ?? 'Français';
+      _darkModeEnabled = isDark;
+      _selectedLanguage = languageName;
       _isLoading = false;
     });
   }
@@ -52,8 +67,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Biométrie non disponible sur cet appareil'),
-              backgroundColor: Colors.red,
+              content: Text('⚠️ Biométrie non disponible sur cet appareil'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -62,17 +78,25 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
       try {
         final bool didAuthenticate = await auth.authenticate(
-          localizedReason:
-              'Veuillez vous authentifier pour activer la biométrie',
+          localizedReason: 'Veuillez confirmer votre identité',
+          // options: const AuthenticationOptions(
+          //   stickyAuth: true,
+          //   biometricOnly: true,
+          // ),
         );
 
         if (!didAuthenticate) return;
       } catch (e) {
-        // Fallback or Error handling
+        // Suppress user canceled errors
+        if (e.toString().contains('userCanceled')) return;
+
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur d\'authentification: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
         return;
       }
@@ -86,10 +110,30 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            value ? 'Biométrie activée et sécurisée' : 'Biométrie désactivée',
+          content: Row(
+            children: [
+              Icon(
+                value ? Icons.lock_outline : Icons.lock_open,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  value
+                      ? '🛡️ Protection biométrique activée !'
+                      : '🔓 Protection désactivée',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
-          backgroundColor: value ? Colors.green : Colors.grey,
+          backgroundColor: value ? Colors.green.shade700 : Colors.grey.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -117,8 +161,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() {
       _darkModeEnabled = value;
     });
-    await _prefs.setBool('dark_mode_enabled', value);
-    // Note: Actual theme switching logic would go here (e.g. updating a ThemeProvider)
+    ref.read(themeProvider.notifier).toggleTheme(value);
   }
 
   void _showLanguageDialog() {
@@ -126,27 +169,38 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2A2A2A),
-        title: const Text(
-          'Choisir la langue',
-          style: TextStyle(color: Colors.white),
+        title: Builder(
+          builder: (context) => Text(
+            AppLocalizations.of(context)!.chooseLanguageTitle,
+            style: const TextStyle(color: Colors.white),
+          ),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ['Français', 'English', 'Español', 'Lingala'].map((lang) {
-            return RadioListTile<String>(
-              title: Text(lang, style: const TextStyle(color: Colors.white)),
-              value: lang,
-              groupValue: _selectedLanguage,
-              activeColor: AppTheme.primaryColor,
-              onChanged: (value) async {
-                if (value != null) {
-                  setState(() => _selectedLanguage = value);
-                  await _prefs.setString('language', value);
-                  if (context.mounted) Navigator.pop(context);
-                }
-              },
-            );
-          }).toList(),
+        content: DropdownButtonFormField<String>(
+          initialValue: _selectedLanguage,
+          dropdownColor: const Color(0xFF2A2A2A),
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white24),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white54),
+            ),
+          ),
+          items: ['Français', 'English']
+              .map((lang) => DropdownMenuItem(
+                    value: lang,
+                    child: Text(lang, style: const TextStyle(color: Colors.white)),
+                  ))
+              .toList(),
+          onChanged: (value) async {
+            if (value != null) {
+              setState(() => _selectedLanguage = value);
+              final code = LocaleState.getCodeFromDisplayName(value);
+              await ref.read(localeProvider.notifier).setLocale(code);
+              if (context.mounted) Navigator.pop(context);
+            }
+          },
         ),
       ),
     );
@@ -155,26 +209,42 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(
           child: CircularProgressIndicator(color: AppTheme.primaryColor),
         ),
       );
     }
 
     final userAsync = ref.watch(currentUserProfileProvider);
+    final isDark =
+        ref.watch(themeProvider) == ThemeMode.dark ||
+        (ref.watch(themeProvider) == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subtitleColor = isDark ? Colors.white54 : Colors.black54;
+    final cardColor = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.grey.withValues(alpha: 0.1);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text(
-          'Paramètres',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
-        backgroundColor: Colors.black.withValues(alpha: 0.7),
+        title: Text(
+          'Paramètres',
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+        ),
+        backgroundColor: Theme.of(
+          context,
+        ).scaffoldBackgroundColor.withValues(alpha: 0.7),
         elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
         flexibleSpace: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -183,20 +253,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A1A1A), Colors.black],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1A1A1A), Colors.black],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF5F5F5), Colors.white],
+                ),
         ),
         child: userAsync.when(
           data: (user) {
             if (user == null) {
-              return const Center(
+              return Center(
                 child: Text(
                   'Utilisateur non connecté',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: textColor),
                 ),
               );
             }
@@ -247,8 +323,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           children: [
                             Text(
                               '${user.firstName} ${user.lastName}',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: textColor,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -256,7 +332,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             Text(
                               user.email ?? 'Email non renseigné',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: subtitleColor,
                                 fontSize: 14,
                               ),
                             ),
@@ -281,8 +357,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     size: 16,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    '${user.points} pts',
+                                  AnimatedCounter(
+                                    value: user.points,
+                                    suffix: ' pts',
                                     style: const TextStyle(
                                       color: Colors.amber,
                                       fontWeight: FontWeight.bold,
@@ -305,10 +382,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => UserProfilePage(
-                                userId: user.uid,
-                                startEditing: true,
-                              ),
+                              builder: (context) => EditProfilePage(user: user),
                             ),
                           );
                         },
@@ -317,7 +391,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                 ),
 
-                _buildSectionHeader('Préférences'),
+                _buildSectionHeader('Services & Missions', isDark),
+                _buildSettingsTile(
+                  icon: Icons.calendar_today,
+                  title: 'Mes Réservations',
+                  subtitle: 'Suivre mes commandes et missions',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BookingsListPage()),
+                  ),
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                ),
+                _buildSettingsTile(
+                  icon: Icons.work_outline,
+                  title: 'Espace Prestataire',
+                  subtitle: 'Gérer mes services et tarifs',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyServicesPage()),
+                  ),
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionHeader('Préférences', isDark),
                 _buildSettingsTile(
                   icon: Icons.notifications_outlined,
                   title: 'Notifications',
@@ -328,6 +429,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     onChanged: (val) => _toggleNotifications(val),
                   ),
                   onTap: () => _toggleNotifications(!_notificationsEnabled),
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
                 _buildSettingsTile(
                   icon: Icons.dark_mode_outlined,
@@ -339,43 +443,103 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     onChanged: (val) => _toggleDarkMode(val),
                   ),
                   onTap: () => _toggleDarkMode(!_darkModeEnabled),
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
                 _buildSettingsTile(
                   icon: Icons.language,
                   title: 'Langue',
-                  subtitle: '$_selectedLanguage (Défaut)',
+                  subtitle: _selectedLanguage,
                   onTap: _showLanguageDialog,
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader('Sécurité'),
+                _buildSectionHeader('Sécurité', isDark),
+                _buildSettingsTile(
+                  icon: Icons.lock_outline,
+                  title: 'Changer le mot de passe',
+                  subtitle: 'Mettre à jour vos accès',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChangePasswordPage(),
+                      ),
+                    );
+                  },
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                ),
                 _buildSettingsTile(
                   icon: Icons.fingerprint,
-                  title: 'Biométrie',
-                  subtitle: 'Verrouillage par empreinte',
+                  title: 'Verrouillage App',
+                  subtitle: _biometricsEnabled
+                      ? '🔒 Protection active'
+                      : 'Non sécurisé',
                   trailing: Switch(
                     value: _biometricsEnabled,
                     activeThumbColor: AppTheme.primaryColor,
                     onChanged: (val) => _toggleBiometrics(val),
                   ),
                   onTap: () => _toggleBiometrics(!_biometricsEnabled),
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                ),
+
+                const SizedBox(height: 24),
+                _buildSectionHeader('Aide & À propos', isDark),
+                _buildSettingsTile(
+                  icon: Icons.gavel,
+                  title: 'CGU / Vision',
+                  subtitle: 'Conditions Générales d\'Utilisation',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CguPage()),
+                    );
+                  },
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
                 _buildSettingsTile(
-                  icon: Icons.privacy_tip_outlined,
-                  title: 'Confidentialité',
-                  subtitle: 'Gérer vos données & Sécurité',
+                  icon: Icons.rocket_launch,
+                  title: 'Revoir l\'introduction',
+                  subtitle: 'Redécouvrir les fonctionnalités',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PrivacySettingsPage(),
+                        builder: (context) => const OnboardingScreen(),
                       ),
                     );
                   },
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader('Aide & À propos'),
+                _buildSettingsTile(
+                  icon: Icons.policy,
+                  title: 'Légal & Confidentialité',
+                  subtitle: 'Politique de protection des données',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyPage(),
+                      ),
+                    );
+                  },
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
+                ),
                 _buildSettingsTile(
                   icon: Icons.help_outline,
                   title: 'Aide & Support',
@@ -388,6 +552,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     );
                   },
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
                 _buildSettingsTile(
                   icon: Icons.info_outline,
@@ -401,44 +568,52 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     );
                   },
+                  textColor: textColor,
+                  subtitleColor: subtitleColor,
+                  cardColor: cardColor,
                 ),
                 const SizedBox(height: 24),
 
-                _buildSectionHeader('Administration & Outils'),
+                if (user.role == 'admin' || user.role == 'super_admin') ...[
+                  _buildSectionHeader('Administration & Outils', isDark),
 
-                // Le bouton demandé explicitement pour l'admin
-                _buildSettingsTile(
-                  icon: Icons.admin_panel_settings,
-                  title: 'Centre de Contrôle',
-                  subtitle: 'Gestion utilisateurs et événements',
-                  color: AppTheme.primaryColor,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminDashboardPage(),
+                  // Le bouton demandé explicitement pour l'admin
+                  _buildSettingsTile(
+                    icon: Icons.admin_panel_settings,
+                    title: 'Centre de Contrôle',
+                    subtitle: 'Gestion utilisateurs et événements',
+                    color: AppTheme.primaryColor,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SuperAdminDashboard(),
+                        ),
+                      );
+                    },
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                    );
-                  },
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Admin',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Admin',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+                    textColor: textColor,
+                    subtitleColor: subtitleColor,
+                    cardColor: cardColor,
                   ),
-                ),
+                ],
 
                 const SizedBox(height: 32),
 
@@ -477,6 +652,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                   ),
                 ),
+
+                // IP Signature
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
+                    child: Text(
+                      'Propriété exclusive de Christian Anisonok',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: subtitleColor.withValues(alpha: 0.5),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             );
           },
@@ -487,13 +677,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
-          color: AppTheme.textSecondary,
+        style: TextStyle(
+          color: isDark ? AppTheme.textSecondary : Colors.black54,
           fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
@@ -507,46 +697,50 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    Color color = Colors.white,
+    Color color =
+        Colors.grey, // Default icon color for light mode if not overridden
     Widget? trailing,
+    required Color textColor,
+    required Color subtitleColor,
+    required Color cardColor,
   }) {
+    // If color is default grey, adapt it to current text color logic unless overridden
+    final iconColor = color == Colors.grey ? textColor : color;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: cardColor),
       ),
       child: ListTile(
         onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: iconColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: color, size: 24),
+          child: Icon(icon, color: iconColor, size: 24),
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-            fontSize: 12,
-          ),
+          style: TextStyle(color: subtitleColor, fontSize: 12),
         ),
         trailing:
             trailing ??
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
-              color: Colors.white24,
+              color: subtitleColor.withValues(alpha: 0.5),
               size: 16,
             ),
       ),

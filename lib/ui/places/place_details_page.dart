@@ -1,116 +1,257 @@
+/* Copyright © 2024 Munokolive Music. Conçu et Développé par Christian Anisonok. Tous droits réservés. */
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:munokolive_music/models/location_model.dart';
+import 'package:munokolive_music/providers/user_provider.dart';
 import 'package:munokolive_music/ui/theme/app_theme.dart';
-import 'package:munokolive_music/models/place_model.dart';
-import 'package:munokolive_music/providers/app_state_providers.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:glassmorphism/glassmorphism.dart';
-import 'package:share_plus/share_plus.dart';
-import '../widgets/cached_image_widget.dart';
-import '../../services/analytics_service.dart';
-import '../widgets/favorite_button.dart';
-import '../../models/favorite_model.dart';
-import '../../services/gamification_service.dart';
-import '../../providers/user_provider.dart';
+
+import 'package:munokolive_music/ui/widgets/smart_snackbar.dart';
+import 'package:munokolive_music/ui/places/edit_place_page.dart';
 
 class PlaceDetailsPage extends ConsumerStatefulWidget {
-  final PlaceModel place;
+  final LocationModel location;
+  final Position? userPosition;
 
-  const PlaceDetailsPage({super.key, required this.place});
+  const PlaceDetailsPage({
+    super.key,
+    required this.location,
+    this.userPosition,
+  });
 
   @override
   ConsumerState<PlaceDetailsPage> createState() => _PlaceDetailsPageState();
 }
 
 class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
-  bool _hasCheckedIn = false;
-
-  void _handleShare() {
-    // ignore: deprecated_member_use
-    Share.share(
-      'Découvrez ${widget.place.name} sur MunokoLive ! ${widget.place.address}, ${widget.place.city}. Téléchargez l\'app maintenant !',
-      subject: 'Découverte : ${widget.place.name}',
-    );
-
-    // Gamification reward for sharing
-    final user = ref.read(userProfileProvider).value;
-    if (user != null) {
-      ref
-          .read(gamificationServiceProvider)
-          .awardPoints(user.uid, 5, reason: 'share_place');
-    }
-  }
-
-  void _handleCheckIn() {
-    setState(() {
-      _hasCheckedIn = true;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Check-in réussi ! +10 points'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    // Gamification reward for check-in
-    final user = ref.read(userProfileProvider).value;
-    if (user != null) {
-      ref
-          .read(gamificationServiceProvider)
-          .awardPoints(user.uid, 10, reason: 'check_in');
-    }
-  }
+  late LocationModel _location;
+  String _distanceInfo = "";
+  String _timeInfo = "";
+  int _currentImageIndex = 0; // For carousel dots
+  Timer? _carouselTimer;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(analyticsServiceProvider).logPlaceViewed(widget.place.id);
-    });
+    _location = widget.location;
+    _calculateTravelInfo();
+    _startCarousel();
   }
 
-  Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    await launchUrl(launchUri);
+  @override
+  void dispose() {
+    _carouselTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startCarousel() {
+    // Only start if we have more than 1 image (interior image exists)
+    if (_location.interiorImageUrl != null) {
+      _carouselTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        if (_pageController.hasClients) {
+          int nextPage = _pageController.page!.round() + 1;
+          if (nextPage > 1) nextPage = 0;
+          _pageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _editPlace() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditPlacePage(location: _location),
+      ),
+    );
+
+    if (result == true) {
+      try {
+        final updatedData = await Supabase.instance.client
+            .from('locations')
+            .select()
+            .eq('id', _location.id)
+            .single();
+
+        if (mounted) {
+          setState(() {
+            _location = LocationModel.fromJson(updatedData);
+            _calculateTravelInfo();
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          SmartSnackBar.show(
+            context,
+            message: "Erreur lors de l'actualisation : $e",
+            isError: true,
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _deletePlace() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF2D0036),
+        title: const Text(
+          "Supprimer ce lieu ?",
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          "Cette action est irréversible. Seul un Super Administrateur peut faire cela.",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Annuler"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Supprimer", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await Supabase.instance.client
+            .from('locations')
+            .delete()
+            .eq('id', _location.id);
+
+        if (mounted) {
+          Navigator.pop(context); // Close details
+          SmartSnackBar.show(
+            context,
+            message: "Lieu supprimé avec succès",
+            isSuccess: true,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          SmartSnackBar.show(context, message: "Erreur: $e", isError: true);
+        }
+      }
+    }
+  }
+
+  void _calculateTravelInfo() {
+    if (widget.userPosition != null &&
+        _location.latitude != null &&
+        _location.longitude != null) {
+      final distanceInMeters = Geolocator.distanceBetween(
+        widget.userPosition!.latitude,
+        widget.userPosition!.longitude,
+        _location.latitude!,
+        _location.longitude!,
+      );
+
+      // Distance formatting
+      if (distanceInMeters < 1000) {
+        _distanceInfo = "${distanceInMeters.toStringAsFixed(0)} m";
+      } else {
+        _distanceInfo = "${(distanceInMeters / 1000).toStringAsFixed(1)} km";
+      }
+
+      // Time estimation (Heuristic)
+      // Walking: 5 km/h (~83 m/min)
+      // Driving: 40 km/h (~666 m/min) average city
+      if (distanceInMeters < 1000) {
+        final minutes = (distanceInMeters / 83).ceil();
+        _timeInfo = "$minutes min à pied";
+      } else {
+        final minutes = (distanceInMeters / 666).ceil();
+        _timeInfo = "$minutes min en voiture";
+      }
+    }
+  }
+
+  Future<void> _launchMaps() async {
+    if (_location.latitude != null && _location.longitude != null) {
+      final googleMapsUrl = Uri.parse(
+        "https://www.google.com/maps/dir/?api=1&destination=${_location.latitude},${_location.longitude}",
+      );
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          SmartSnackBar.show(
+            context,
+            message: "Impossible d'ouvrir la carte",
+            isError: true,
+          );
+        }
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1E0024),
       body: CustomScrollView(
         slivers: [
-          // Header Image with 360/Virtual Tour Hint
+          // App Bar with Image
           SliverAppBar(
-            expandedHeight: 250,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            expandedHeight: 300.0,
+            floating: false,
             pinned: true,
-            actions: [
-              FavoriteButton(
-                type: FavoriteType.place,
-                itemId: widget.place.id,
-                metadata: {
-                  'name': widget.place.name,
-                  'city': widget.place.city,
-                  'neighborhood': widget.place.neighborhood,
-                },
-              ),
-            ],
+            backgroundColor: const Color(0xFF1E0024),
             flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                _location.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  shadows: [Shadow(color: Colors.black, blurRadius: 10)],
+                ),
+              ),
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (widget.place.images.isNotEmpty)
-                    CachedImageWidget(
-                      imageUrl: widget.place.images.first,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    )
-                  else
-                    Container(color: Colors.grey),
+                  PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) =>
+                        setState(() => _currentImageIndex = index),
+                    children: [
+                      // Exterior Image
+                      _location.imageUrl != null
+                          ? Hero(
+                              tag: 'place-img-${_location.id}',
+                              child: CachedNetworkImage(
+                                imageUrl: _location.imageUrl!,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Container(color: Colors.grey[900]),
 
-                  // Gradient Overlay
+                      // Interior Image (if available)
+                      if (_location.interiorImageUrl != null)
+                        CachedNetworkImage(
+                          imageUrl: _location.interiorImageUrl!,
+                          fit: BoxFit.cover,
+                        ),
+                    ],
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -118,372 +259,247 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          AppTheme.backgroundDark.withValues(alpha: 0.8),
+                          Colors.black.withValues(alpha: 0.8),
                         ],
                       ),
                     ),
                   ),
+                  // Dots Indicator
+                  if (_location.interiorImageUrl != null)
+                    Positioned(
+                      bottom: 20,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildDot(0),
+                          const SizedBox(width: 8),
+                          _buildDot(1),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
 
-                  // Virtual Tour Badge (Functionality "Surprise")
-                  Positioned(
-                    top: 50,
-                    right: 16,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FullScreenGallery(
-                              images: widget.place.images,
-                              initialIndex: 0,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
+          // Details Body
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category & Validation Badge
+                  Row(
+                    children: [
+                      Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.secondaryColor),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.secondaryColor.withValues(
-                                alpha: 0.3,
-                              ),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.threed_rotation,
-                              color: AppTheme.secondaryColor,
-                              size: 16,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              "Visite 360° / Galerie",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              title: Text(
-                widget.place.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              centerTitle: true,
-            ),
-          ),
-
-          // Content
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              color: AppTheme.backgroundDark,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Badges & Category
-                  Row(
-                    children: [
-                      if (widget.place.isVerified)
-                        Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blueAccent),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.verified,
-                                color: Colors.blueAccent,
-                                size: 14,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                "Vérifié",
-                                style: TextStyle(
-                                  color: Colors.blueAccent,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: AppTheme.primaryColor),
                         ),
                         child: Text(
-                          widget.place.categoryLabel,
+                          _location.category,
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
-                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+                      const Spacer(),
+                      if (_location.isValidated)
+                        const Chip(
+                          avatar: Icon(
+                            Icons.verified,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          label: Text(
+                            "Vérifié",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Description
-                  Text(
-                    widget.place.description,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 24),
 
-                  // Heatmap / Popularity (Surprise Feature)
-                  _buildHeatmapIndicator(),
-                  const SizedBox(height: 24),
-
-                  // Location Info
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Colors.white54,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "${widget.place.address}, ${widget.place.city}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                          ),
+                  // Smart Distance Card
+                  if (_distanceInfo.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.blue.shade900.withValues(alpha: 0.4),
+                            Colors.purple.shade900.withValues(alpha: 0.4),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.person, color: Colors.white54, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Géré par : ${widget.place.ownerName}",
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Action Buttons (Action-Oriented Design)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.near_me,
+                            color: Colors.lightBlueAccent,
+                            size: 30,
                           ),
-                          onPressed: () {
-                            if (widget.place.coordinates != null) {
-                              // Sync with Radar
-                              ref
-                                  .read(mapFocusLocationProvider.notifier)
-                                  .state = LatLng(
-                                widget.place.coordinates!.latitude,
-                                widget.place.coordinates!.longitude,
-                              );
-                              ref.read(bottomNavIndexProvider.notifier).state =
-                                  1; // Go to Radar
-                              Navigator.pop(
-                                context,
-                              ); // Close details to show map
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.directions,
-                            color: Colors.white,
-                          ),
-                          label: const Text(
-                            "S'y rendre",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: const BorderSide(
-                              color: AppTheme.secondaryColor,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () =>
-                              _makePhoneCall(widget.place.contactPhone),
-                          icon: const Icon(
-                            Icons.phone,
-                            color: AppTheme.secondaryColor,
-                          ),
-                          label: const Text(
-                            "Appeler",
-                            style: TextStyle(color: AppTheme.secondaryColor),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Social & Gamification Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.3),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: _handleShare,
-                          icon: const Icon(
-                            Icons.share_outlined,
-                            color: Colors.white,
-                          ),
-                          label: const Text(
-                            "Partager",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      if (!_hasCheckedIn)
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: _handleCheckIn,
-                            icon: const Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.white,
-                            ),
-                            label: const Text(
-                              "Check-in",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        )
-                      else
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.green),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.check,
-                                  color: Colors.green,
-                                  size: 20,
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "À $_distanceInfo de vous",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Validé",
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Mini Map Preview
-                  if (widget.place.coordinates != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: SizedBox(
-                        height: 150,
-                        width: double.infinity,
-                        child: GoogleMap(
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng(
-                              widget.place.coordinates!.latitude,
-                              widget.place.coordinates!.longitude,
-                            ),
-                            zoom: 15,
-                          ),
-                          markers: {
-                            Marker(
-                              markerId: MarkerId(widget.place.id),
-                              position: LatLng(
-                                widget.place.coordinates!.latitude,
-                                widget.place.coordinates!.longitude,
                               ),
-                              icon: BitmapDescriptor.defaultMarkerWithHue(
-                                BitmapDescriptor.hueViolet,
+                              Text(
+                                "Environ $_timeInfo",
+                                style: const TextStyle(color: Colors.white70),
                               ),
-                            ),
-                          },
-                          zoomControlsEnabled: false,
-                          scrollGesturesEnabled: false,
-                        ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
 
-                  const SizedBox(height: 100), // Spacing for bottom
+                  const SizedBox(height: 24),
+
+                  // Info Section
+                  _buildInfoRow(
+                    Icons.location_on,
+                    "Adresse",
+                    _location.address ?? "Non spécifiée",
+                  ),
+                  if (_location.responsibleName != null &&
+                      _location.responsibleName!.isNotEmpty)
+                    _buildInfoRow(
+                      Icons.person,
+                      "Responsable",
+                      _location.responsibleName!,
+                    ),
+                  if (_location.contactPhone != null &&
+                      _location.contactPhone!.isNotEmpty)
+                    _buildInfoRow(
+                      Icons.phone,
+                      "Contact",
+                      _location.contactPhone!,
+                    ),
+
+                  const SizedBox(height: 30),
+
+                  // Action Buttons
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton.icon(
+                      onPressed: _launchMaps,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 10,
+                        shadowColor: AppTheme.primaryColor.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                      icon: const Icon(Icons.directions, color: Colors.white),
+                      label: const Text(
+                        "Y ALLER MAINTENANT",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Admin / Creator Actions
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final currentUser = ref.watch(userProfileProvider).value;
+                      final isSuperAdmin = currentUser?.role == 'super_admin';
+                      final isCreator =
+                          currentUser?.id == _location.submittedById;
+
+                      if (!isSuperAdmin && !isCreator) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        children: [
+                          if (isCreator)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _editPlace,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.orangeAccent,
+                                    side: const BorderSide(
+                                      color: Colors.orangeAccent,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.edit),
+                                  label: const Text("MODIFIER CE LIEU"),
+                                ),
+                              ),
+                            ),
+
+                          if (isSuperAdmin)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20),
+                              child: Center(
+                                child: TextButton.icon(
+                                  onPressed: _deletePlace,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 12,
+                                    ),
+                                    backgroundColor: Colors.red.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.delete_forever),
+                                  label: const Text("SUPPRIMER (Super Admin)"),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -493,158 +509,42 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
     );
   }
 
-  Widget _buildHeatmapIndicator() {
-    // "Heatmap de Disponibilité" - Mock logic based on "random" or real data if available
-    // For now, let's pretend it's calculated based on nearby users (which we could get from providers if we wanted)
-    bool isBusy = DateTime.now().minute % 2 == 0; // Randomize for demo
-
-    return GlassmorphicContainer(
-      width: double.infinity,
-      height: 60,
-      borderRadius: 12,
-      blur: 10,
-      alignment: Alignment.center,
-      border: 1,
-      linearGradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.white.withValues(alpha: 0.05),
-          Colors.white.withValues(alpha: 0.01),
-        ],
-      ),
-      borderGradient: LinearGradient(
-        colors: [
-          Colors.white.withValues(alpha: 0.2),
-          Colors.white.withValues(alpha: 0.05),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Icon(
-              isBusy ? Icons.local_fire_department : Icons.spa,
-              color: isBusy ? Colors.orange : Colors.greenAccent,
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  isBusy ? "Actuellement Populaire" : "Ambiance Calme",
-                  style: TextStyle(
-                    color: isBusy ? Colors.orange : Colors.greenAccent,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  isBusy
-                      ? "Beaucoup de membres à proximité"
-                      : "Idéal pour se concentrer",
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
+  Widget _buildDot(int index) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: _currentImageIndex == index ? 20 : 8,
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: _currentImageIndex == index
+            ? AppTheme.primaryColor
+            : Colors.white.withValues(alpha: 0.5),
       ),
     );
   }
-}
 
-class FullScreenGallery extends StatefulWidget {
-  final List<String> images;
-  final int initialIndex;
-
-  const FullScreenGallery({
-    super.key,
-    required this.images,
-    this.initialIndex = 0,
-  });
-
-  @override
-  State<FullScreenGallery> createState() => _FullScreenGalleryState();
-}
-
-class _FullScreenGalleryState extends State<FullScreenGallery> {
-  late PageController _pageController;
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        alignment: Alignment.center,
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PageView.builder(
-            controller: _pageController,
-            physics: const BouncingScrollPhysics(),
-            itemCount: widget.images.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: Center(
-                  child: CachedImageWidget(
-                    imageUrl: widget.images[index],
-                    fit: BoxFit.contain,
-                    placeholder: Container(
-                      color: Colors.black,
-                      child: const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                    ),
-                    errorWidget: const Center(
-                      child: Icon(
-                        Icons.broken_image,
-                        color: Colors.white,
-                        size: 50,
-                      ),
-                    ),
-                  ),
+          Icon(icon, color: Colors.white54, size: 20),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
-              );
-            },
-          ),
-          Positioned(
-            top: 40,
-            left: 20,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 30),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          Positioned(
-            bottom: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                "${_currentIndex + 1} / ${widget.images.length}",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
-              ),
+              ],
             ),
           ),
         ],

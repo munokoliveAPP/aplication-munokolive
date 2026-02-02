@@ -34,6 +34,17 @@ android {
 
     buildTypes {
         release {
+            // Enables code shrinking, obfuscation, and optimization
+            isMinifyEnabled = false
+            // Enables resource shrinking, which is performed by the Android Gradle plugin.
+            isShrinkResources = false
+            // Includes the default ProGuard rules files that are packaged with
+            // the Android Gradle plugin. To learn more, go to the section about
+            // R8 configuration files.
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
@@ -47,5 +58,5 @@ flutter {
 
 dependencies {
     // Required for libraries that need newer Java APIs (core library desugaring)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
