@@ -1,470 +1,1213 @@
 {
-  "appTitle": "MunokoLive Music",
-  "@appTitle": {
-    "description": "Titre de l'application"
-  },
-  "welcomeMessage": "Bienvenue sur MunokoLive",
-  "@welcomeMessage": { "description": "Message de bienvenue affiché à l'utilisateur" },
-  "loginButton": "Se connecter",
-  "@loginButton": { "description": "Bouton de connexion" },
-  "registerButton": "S'inscrire",
-  "@registerButton": { "description": "Bouton d'inscription" },
-  "homeTab": "Accueil",
-  "@homeTab": { "description": "Onglet bas: Accueil" },
-  "eventsTab": "Événements",
-  "@eventsTab": { "description": "Onglet bas: Événements" },
-  "placesTab": "Lieux",
-  "@placesTab": { "description": "Onglet bas: Lieux" },
-  "profileTab": "Profil",
-  "@profileTab": { "description": "Onglet bas: Profil" },
-  "settingsTitle": "Paramètres",
-  "@settingsTitle": { "description": "Titre de la page Paramètres" },
-  "languageOption": "Langue",
-  "@languageOption": { "description": "Option des paramètres: langue" },
-  "themeOption": "Thème",
-  "@themeOption": { "description": "Option des paramètres: thème" },
-  "biometricsOption": "Biométrie",
-  "@biometricsOption": { "description": "Option des paramètres: biométrie" },
-  "notificationsOption": "Notifications",
-  "@notificationsOption": { "description": "Option des paramètres: notifications" },
-  "emailLabel": "Email",
-  "@emailLabel": { "description": "Libellé du champ email" },
-  "passwordLabel": "Mot de passe",
-  "@passwordLabel": { "description": "Libellé du champ mot de passe" },
-  "confirmPasswordLabel": "Confirmer le mot de passe",
-  "@confirmPasswordLabel": { "description": "Libellé de confirmation du mot de passe" },
-  "referralCodeLabel": "Code de parrainage",
-  "@referralCodeLabel": { "description": "Libellé du champ code de parrainage" },
-  "forgotPassword": "Mot de passe oublié ?",
-  "@forgotPassword": { "description": "Lien de réinitialisation du mot de passe" },
-  "noAccount": "Pas encore de compte ?",
-  "@noAccount": { "description": "Invite l'utilisateur s'il n'a pas de compte" },
-  "alreadyAccount": "Déjà un compte ?",
-  "@alreadyAccount": { "description": "Invite pour utilisateurs qui ont déjà un compte" },
-  "invalidEmail": "Email invalide",
-  "@invalidEmail": { "description": "Erreur indiquant que l'email est invalide" },
-  "@invalidEmailMessage": { "description": "Erreur quand le format de l'email est invalide" },
-  "passwordMinLength": "Min 6 caractères",
-  "@passwordMinLength": { "description": "Avertissement quand le mot de passe est trop court" },
-  "passwordsMismatch": "Les mots de passe ne correspondent pas",
-  "@passwordsMismatch": { "description": "Erreur quand les mots de passe ne correspondent pas" },
-  "referralCodeRequired": "Le code parrain est obligatoire",
-  "@referralCodeRequired": { "description": "Erreur quand le code parrain est requis/manquant" },
-  "authenticating": "Authentification...",
-  "@authenticating": { "description": "Statut : authentification en cours" },
-  "success": "Succès !",
-  "@success": { "description": "Statut : opération réussie" },
-  "verifying": "Vérification...",
-  "@verifying": { "description": "Statut : vérification des données/processus" },
-  "initializing": "Initialisation...",
-  "@initializing": { "description": "Statut : initialisation de l'application" },
-  "redirecting": "Redirection...",
-  "@redirecting": { "description": "Statut : redirection en cours" },
-  "creatingAccount": "Création du compte...",
-  "@creatingAccount": { "description": "Statut : création du compte en cours" },
-  "welcome": "Bienvenue !",
-  "@welcome": { "description": "Message de bienvenue générique" },
-  "fixFormErrors": "Veuillez corriger les erreurs dans le formulaire",
-  "@fixFormErrors": { "description": "Invite l'utilisateur à corriger le formulaire" },
-  "invalidReferralCode": "Code parrain invalide ou introuvable",
-  "@invalidReferralCode": { "description": "Erreur quand le code parrain est invalide ou manquant" },
-  "networkError": "Problème de connexion internet.",
-  "@networkError": { "description": "Erreur de connectivité réseau" },
-  "weakPassword": "Le mot de passe est trop faible (6 caractères min).",
-  "@weakPassword": { "description": "Avertissement si le mot de passe est trop faible" },
-  "emailInUse": "Cet email est déjà utilisé par un autre compte.",
-  "@emailInUse": { "description": "Erreur quand l'email est déjà enregistré" },
-  "invalidEmailMessage": "L'adresse email est invalide.",
-  "@invalidEmailMessage": { "description": "Erreur quand l'adresse email est invalide" },
-  "genericError": "Une erreur est survenue",
-  "@genericError": { "description": "Message d'erreur générique" },
-  "rateLimitError": "Trop de tentatives. Veuillez patienter un moment.",
-  "@rateLimitError": { "description": "Affiché quand l'utilisateur atteint les limites d'opérations" },
-  "invalidCredentials": "Email ou mot de passe incorrect. Si vous n'avez pas encore de compte, veuillez vous inscrire.",
-  "@invalidCredentials": { "description": "Erreur quand les identifiants sont incorrects" },
-  "securityDelay": "Pour des raisons de sécurité, veuillez patienter avant de réessayer.",
-  "@securityDelay": { "description": "Indique d'attendre à cause de la limitation de sécurité" },
-  "welcomeBack": "Heureux de vous revoir !",
-  "@welcomeBack": { "description": "Message amical quand l'utilisateur revient" },
-  "joinFamily": "Rejoindre la Famille",
-  "@joinFamily": { "description": "CTA pour rejoindre la communauté/famille" },
-  "loginToContinue": "Connectez-vous pour continuer",
-  "@loginToContinue": { "description": "Invite l'utilisateur à se connecter pour continuer" },
-  "createAccountSubtitle": "Créez votre compte en quelques secondes",
-  "@createAccountSubtitle": { "description": "Sous-titre incitant à une inscription rapide" },
-  "emailRequired": "Email requis",
-  "@emailRequired": { "description": "Validation quand l'email est requis" },
-  "placesTitle": "Nos Lieux",
-  "@placesTitle": { "description": "Titre de la page Lieux" },
-  "addPlace": "AJOUTER",
-  "@addPlace": { "description": "Action pour ajouter un nouveau lieu" },
-  "searchPlaceholder": "Rechercher (ex: Yopougon, Studio...)",
-  "@searchPlaceholder": { "description": "Placeholder du champ de recherche pour les Lieux" },
-  "allCategories": "Tous",
-  "@allCategories": { "description": "Filtre de catégorie: tous les lieux" },
-  "church": "Église",
-  "@church": { "description": "Catégorie de lieu : église" },
-  "rehearsalRoom": "Salle de répétition",
-  "@rehearsalRoom": { "description": "Catégorie de lieu : salle de répétition" },
-  "recordingStudio": "Studio d'enregistrement",
-  "@recordingStudio": { "description": "Catégorie de lieu : studio d'enregistrement" },
-  "eventSpace": "Espace événementiel",
-  "@eventSpace": { "description": "Catégorie de lieu : espace événementiel" },
-  "listUpdated": "Liste mise à jour !",
-  "@listUpdated": { "description": "Toast affiché quand la liste est mise à jour" },
-  "errorPrefix": "Erreur : ",
-  "@errorPrefix": { "description": "Préfixe utilisé avant les descriptions d'erreur" },
-  "noPlacesFound": "Aucun lieu trouvé.",
-  "@noPlacesFound": { "description": "Affiché quand la recherche ne trouve aucun lieu" },
-  "closestPlace": "Le plus proche",
-  "@closestPlace": { "description": "Indique le lieu le plus proche" },
-  "addressUnspecified": "Adresse non spécifiée",
-  "@addressUnspecified": { "description": "Affiché quand l'adresse du lieu est manquante" },
-  "mapOpenError": "Impossible d'ouvrir la carte",
-  "@mapOpenError": { "description": "Erreur quand l'application carte ne s'ouvre pas" },
-  "proposeSacredPlace": "Proposer un lieu sacré",
-  "@proposeSacredPlace": { "description": "CTA pour proposer un lieu sacré" },
-  "exteriorFacade": "Extérieur (Façade)",
-  "@exteriorFacade": { "description": "Libellé pour la photo de façade extérieure" },
-  "interiorOptional": "Intérieur (Optionnel)",
-  "@interiorOptional": { "description": "Libellé pour la photo intérieure optionnelle" },
-  "placeNameLabel": "Nom du lieu",
-  "@placeNameLabel": { "description": "Libellé du champ nom du lieu" },
-  "categoryLabel": "Catégorie",
-  "@categoryLabel": { "description": "Libellé du champ catégorie" },
-  "managerNameLabel": "Nom du responsable",
-  "@managerNameLabel": { "description": "Libellé du champ nom du responsable" },
-  "contactPhoneLabel": "Contact (Téléphone)",
-  "@contactPhoneLabel": { "description": "Libellé du champ contact téléphone" },
-  "markThisPlaceGps": "MARQUER CE LIEU (GPS ICI)",
-  "@markThisPlaceGps": { "description": "CTA pour marquer la position GPS actuelle comme celle du lieu" },
-  "positionSavedEdit": "Position Enregistrée ! (Modifier)",
-  "@positionSavedEdit": { "description": "Toast indiquant que la position est enregistrée avec suggestion de modification" },
-  "submitForValidation": "SOUMETTRE À VALIDATION",
-  "@submitForValidation": { "description": "CTA pour soumettre le lieu à la validation de l'administrateur" },
-  "statusPreparing": "Préparation...",
-  "statusUploadingMainPhoto": "Envoi de la photo principale...",
-  "@statusUploadingMainPhoto": { "description": "Statut lors de l'envoi de la photo principale du lieu" },
-  "statusUploadingInteriorPhoto": "Envoi de la photo intérieure...",
-  "@statusUploadingInteriorPhoto": { "description": "Statut lors de l'envoi de la photo intérieure optionnelle" },
-  "statusSavingPlace": "Enregistrement du lieu...",
-  "@statusSavingPlace": { "description": "Statut lors de l'enregistrement des informations du lieu" },
-  "positionCaptured": "📍 Position capturée : {lat}, {lng}",
-  "@positionCaptured": {
-    "description": "Toast affichant les coordonnées GPS capturées",
-    "placeholders": {
-      "lat": { "type": "double" },
-      "lng": { "type": "double" }
-    }
-  },
-  "gpsCaptureError": "Impossible de capturer la position. Vérifiez votre GPS.",
-  "@gpsCaptureError": { "description": "Erreur quand la capture de position GPS échoue" },
-  "pleaseAddImage": "Veuillez ajouter une image",
-  "@pleaseAddImage": { "description": "Invite à ajouter une image" },
-  "pleaseCapturePosition": "Veuillez capturer la position du lieu",
-  "@pleaseCapturePosition": { "description": "Invite à capturer la position GPS" },
-  "userNotLoggedIn": "Utilisateur non connecté",
-  "@userNotLoggedIn": { "description": "Erreur quand une authentification est requise" },
-  "placeSubmittedTitle": "Lieu soumis avec succès",
-  "placePublishedImmediately": "Lieu validé et publié immédiatement.",
-  "placeProposalSent": "Votre proposition pour {name} a été envoyée.",
-  "@placeProposalSent": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
-  "placeAddedAndValidated": "✅ Lieu ajouté et validé !",
-  "placeSubmittedPending": "Lieu soumis avec succès ! En attente de validation.",
-  "pleaseEnterEmail": "Veuillez entrer votre email",
-  "resetEmailSent": "Email de réinitialisation envoyé",
-  "completeProfileTitle": "Complétez votre profil",
-  "completeProfileSubtitle": "Une photo et vos informations sont requises pour la validation.",
-  "firstNameLabel": "Prénom",
-  "lastNameLabel": "Nom",
-  "firstNameRequired": "Prénom requis",
-  "lastNameRequired": "Nom requis",
-  "birthDateLabel": "Date de naissance",
-  "birthDateRequired": "Date requise",
-  "churchLabel": "Église / Paroisse",
-  "churchRequired": "Église requise",
-  "referralCodeActive": "Parrainage activé",
-  "referralCodeMandatory": "Code Parrain (Obligatoire)",
-  "privacyPolicyAccept": "Veuillez accepter la Politique de Confidentialité",
-  "photoRequired": "Veuillez ajouter une photo de profil (Obligatoire)",
-  "optimizingPhoto": "Optimisation de votre photo en cours...",
-  "optimizingNetwork": "Optimisation et vérification réseau...",
-  "slowConnectionMessage": "Cela prend un peu plus de temps que prévu...\nVérification de la connexion et optimisation de la photo en cours.",
-  "uploadingPhoto": "Envoi de la photo (cela peut prendre un moment)...",
-  "savingProfile": "Enregistrement du profil...",
-  "finished": "Terminé !",
-  "musician": "Musicien",
-  "singerAndInstrumentalist": "Chantre & Instrumentiste",
-  "minister": "Ministre",
-  "servantOfGod": "Serviteur de Dieu",
-  "media": "Média",
-  "photoVideoSound": "Photo, Vidéo, Son",
-  "labelManager": "Label / Manager",
-  "producer": "Producteur",
-  "organizer": "Organisateur",
-  "eventsAndConcerts": "Événements & Concerts",
-  "particular": "Particulier",
-  "musicLover": "Mélomane / Adorateur",
-  "role": "Rôle",
-  "selectRole": "Sélectionnez votre rôle",
-  "instrument": "Instrument",
-  "selectInstrument": "Sélectionnez votre instrument",
-  "privacyPolicyText": "J'accepte la Politique de Confidentialité et les Conditions d'Utilisation",
-  "readAndAccept": "J'ai lu et j'accepte la ",
-  "privacyPolicy": "Politique de Confidentialité",
-  "ofAppByAuthor": " de Munokolive Music rédigée par Christian Anisonok.",
-  "save": "ENREGISTRER",
-  "instrumentOrRole": "Instrument / Rôle",
-  "ministry": "Ministère",
-  "selectionRequired": "Sélection requise",
-  "rolePianist": "Pianiste",
-  "roleDrummer": "Batteur",
-  "roleBassist": "Bassiste",
-  "roleGuitarist": "Guitariste",
-  "roleSaxophonist": "Saxophoniste",
-  "rolePercussionist": "Percussionniste",
-  "roleViolinist": "Violoniste",
-  "roleSynthesizer": "Synthétiseur",
-  "roleTrumpeter": "Trompettiste",
-  "roleFlutist": "Flûtiste",
-  "roleSinger": "Chantre",
-  "roleChoirMaster": "Maître de chœur",
-  "roleMusicTrainer": "Formateur Musique",
-  "roleSoundEngineer": "Ingénieur son",
-  "roleBeatmaker": "Beatmaker",
-  "rolePastor": "Pasteur",
-  "roleProphet": "Prophète",
-  "roleDeacon": "Diacre",
-  "roleEvangelist": "Évangéliste",
-  "roleDoctor": "Docteur",
-  "roleApostle": "Apôtre",
-  "requiredField": "Ce champ est requis",
-  "passwordUpdatedSuccess": "Mot de passe mis à jour avec succès !",
-  "updatePasswordTitle": "Mise à jour du mot de passe",
-  "newPasswordLabel": "Nouveau mot de passe",
-  "updateButton": "Mettre à jour",
-  "cannotOpenWhatsApp": "Impossible d'ouvrir WhatsApp",
-  "@cannotOpenWhatsApp": { "description": "Erreur quand WhatsApp ne peut pas s'ouvrir" },
-  "congratulations": "FÉLICITATIONS !",
-  "@congratulations": { "description": "Titre de célébration après validation réussie" },
-  "accountValidated": "Compte validé",
-  "@accountValidated": { "description": "Indique que le compte a été validé" },
-  "redirectionInProgress": "Bienvenue sur Munoko Live Music.\nRedirection en cours...",
-  "@redirectionInProgress": { "description": "Message affiché lors de la redirection après validation" },
-  "verificationInProgress": "VÉRIFICATION EN COURS",
-  "@verificationInProgress": { "description": "Message affiché pendant la vérification du profil/processus" },
-  "profileAnalysisMessage": "Votre profil est en cours d'analyse.\nMerci de patienter pendant que nous validons vos informations.",
-  "@profileAnalysisMessage": { "description": "Explique la phase d'analyse du profil durant la validation" },
-  "refreshingStatus": "Actualisation du statut...",
-  "@refreshingStatus": { "description": "Texte de statut lors de l'actualisation de l'état utilisateur" },
-  "refreshStatusButton": "ACTUALISER MON STATUT",
-  "@refreshStatusButton": { "description": "CTA pour actualiser la validation/le statut" },
-  "supportButton": "Support",
-  "@supportButton": { "description": "CTA pour accéder au support" },
-  "quitButton": "Quitter",
-  "@quitButton": { "description": "CTA pour quitter la session ou la page" },
-  "chooseLanguageTitle": "Choisir la langue",
-  "@chooseLanguageTitle": { "description": "Titre pour la page ou modale de choix de langue" },
-  "biometricNotAvailable": "⚠️ Biométrie non disponible sur cet appareil",
-  "@biometricNotAvailable": { "description": "Indique que la biométrie n'est pas supportée" },
-  "biometricEnabledMsg": "🛡️ Protection biométrique activée !",
-  "@biometricEnabledMsg": { "description": "Toast indiquant que la biométrie est activée" },
-  "biometricDisabledMsg": "🔓 Protection désactivée",
-  "@biometricDisabledMsg": { "description": "Toast indiquant que la biométrie est désactivée" },
-  "notificationsEnabledMsg": "Notifications activées",
-  "@notificationsEnabledMsg": { "description": "Toast indiquant que les notifications sont activées" },
-  "notificationsDisabledMsg": "Notifications désactivées",
-  "@notificationsDisabledMsg": { "description": "Toast indiquant que les notifications sont désactivées" },
-  "helpSupportTitle": "AIDE & SUPPORT",
-  "@helpSupportTitle": { "description": "Titre de la page Aide & Support" },
-  "supportHeaderTitle": "MUNOKOLIVE SUPPORT",
-  "@supportHeaderTitle": { "description": "Titre d'en-tête dans la page Support" },
-  "supportHeaderSlogan": "À votre service pour que le service de Dieu ne s'arrête jamais.",
-  "@supportHeaderSlogan": { "description": "Slogan affiché dans la page Support" },
-  "sectionAiTitle": "1. ASSISTANCE IA (MUNO-IA)",
-  "@sectionAiTitle": { "description": "Titre de la section Assistance IA" },
-  "sectionFaqTitle": "2. FOIRE AUX QUESTIONS (FAQ)",
-  "@sectionFaqTitle": { "description": "Titre de la section FAQ" },
-  "sectionContactTitle": "3. CONTACTER LE BUREAU",
-  "@sectionContactTitle": { "description": "Titre de la section Contact Bureau" },
-  "sectionDiagnosticTitle": "4. CENTRE DE DIAGNOSTIC",
-  "@sectionDiagnosticTitle": { "description": "Titre de la section Centre de Diagnostic" },
-  "supportWhatsappButton": "SUPPORT WHATSAPP",
-  "@supportWhatsappButton": { "description": "CTA pour contacter le support via WhatsApp" },
-  "callAdminButton": "Appeler l'Administrateur",
-  "@callAdminButton": { "description": "CTA pour appeler un administrateur" },
-  "urgentValidationsHint": "Recommandé pour les validations urgentes",
-  "@urgentValidationsHint": { "description": "Indication de validation urgente" },
-  "supportEmailLabel": "Support Email",
-  "@supportEmailLabel": { "description": "Libellé pour l'email de support" },
-  "emergencyReportLabel": "Signalement d'Urgence",
-  "@emergencyReportLabel": { "description": "Libellé pour le signalement d'urgence" },
-  "emergencyReportSubtitle": "Signaler un abus ou piratage",
-  "@emergencyReportSubtitle": { "description": "Sous-titre pour l'élément de signalement d'urgence" },
-  "cacheCleared": "Cache vidé avec succès !",
-  "@appVersionLabel": { "description": "Libellé indiquant la version de l'application" },
-  "appVersionLabel": "Version de l'App",
-  "@serverStatusLabel": { "description": "Libellé indiquant le statut du serveur" },
-  "serverStatusLabel": "Statut Serveur",
-  "@serverOperational": { "description": "Texte indiquant que le serveur est opérationnel" },
-  "serverOperational": "Opérationnel",
-  "@usefulIfImagesMessage": { "description": "Texte d'aide pour l'utilité du nettoyage du cache" },
-  "usefulIfImagesMessage": "Utile si les images ne s'affichent plus correctement.",
-  "aboutTitle": "À PROPOS",
-  "@aboutTitle": { "description": "Titre de la page À Propos" },
-  "appNameTitle": "MUNOKOLIVE MUSIC",
-  "@appNameTitle": { "description": "Nom de l'application affiché dans À Propos" },
-  "appSlogan": "Connecter le Talent à l’Onction,\nBâtir l’Horizon de Demain",
-  "@appSlogan": { "description": "Slogan de l'application dans À Propos" },
-  "sectionEssenceTitle": "L'ESSENCE DU PROJET",
-  "@sectionEssenceTitle": { "description": "Titre de la section Essence" },
-  "sectionVisionTitle": "LA VISION DE L’HORIZON",
-  "@sectionVisionTitle": { "description": "Titre de la section Vision" },
-  "sectionVisionSubtitle": "(Pourquoi Munokolive ?)",
-  "@sectionVisionSubtitle": { "description": "Sous-titre de la section Vision" },
-  "sectionOrganizationTitle": "NOTRE ORGANISATION",
-  "@sectionOrganizationTitle": { "description": "Titre de la section Organisation" },
-  "sectionOrganizationSubtitle": "LE CORPS DU CHRIST",
-  "@sectionOrganizationSubtitle": { "description": "Sous-titre de la section Organisation" },
-  "sectionTechTitle": "RÉVOLUTION TECHNOLOGIQUE",
-  "@sectionTechTitle": { "description": "Titre de la section Technologie" },
-  "sectionTechSubtitle": "AU SERVICE DU SPIRITUEL",
-  "@sectionTechSubtitle": { "description": "Sous-titre de la section Technologie" },
-  "sectionGoldenRuleTitle": "NOTRE RÈGLE D’OR",
-  "@sectionGoldenRuleTitle": { "description": "Titre de la section Règle d'or" },
-  "sectionGoldenRuleSubtitle": "LE RESPECT MUTUEL",
-  "@sectionGoldenRuleSubtitle": { "description": "Sous-titre de la section Règle d'or" },
-  "founderQuoteText": "Nous sommes à la cuisine de Gospel Family. Ici, tout le monde travaille. Cette plateforme est le socle de ce que nous bâtirons dans les années à venir par la grâce de Dieu. Restons vigilants, restons unis, et gardons les yeux fixés sur l'horizon.",
-  "@founderQuoteText": { "description": "Contenu de la citation du fondateur" },
-  "founderSignature": "— Christian ANISONOK",
-  "@founderSignature": { "description": "Signature du fondateur" },
-  "cguHeaderTitle": "CONDITIONS GÉNÉRALES D'UTILISATION (CGU)\nMUNOKOLIVE MUSIC",
-  "@cguHeaderTitle": { "description": "Titre d'en-tête de la page CGU" },
-  "cguVersionLine": "Version 1.0 – \"La Vision du Futur à Long Terme\"",
-  "@cguVersionLine": { "description": "Sous-titre de version sur la page CGU" },
-  "welcomeFamilyDialogTitle": "BIENVENUE DANS LA FAMILLE",
-  "@welcomeFamilyDialogTitle": { "description": "Titre du dialogue lors de l'acceptation des CGU" },
-  "welcomeFamilyDialogSubtitle": "La Vision du Futur commence maintenant.",
-  "@welcomeFamilyDialogSubtitle": { "description": "Sous-titre du dialogue lors de l'acceptation des CGU" },
-  "privacyTitleAppBar": "Confidentialité",
-  "@privacyTitleAppBar": { "description": "Titre de l'AppBar de la page Confidentialité" },
-  "privacyHeaderTitle": "POLITIQUE DE CONFIDENTIALITÉ\nMUNOKOLIVE MUSIC",
-  "@privacyHeaderTitle": { "description": "Titre d'en-tête de la page de confidentialité" },
-  "lastUpdateLabel": "Dernière mise à jour :",
-  "@lastUpdateLabel": { "description": "Libellé précédant la date de dernière mise à jour" },
-  "exclusivePropertyLine": "Propriété exclusive de : M. Christian ANISONOK",
-  "@exclusivePropertyLine": { "description": "Ligne indiquant la propriété sur la page de confidentialité" },
-  "legalProtectionMentionTitle": "MENTION LÉGALE DE PROTECTION",
-  "@legalProtectionMentionTitle": { "description": "Titre de la mention légale de protection" },
-  "pleaseAuthenticate": "Veuillez vous authentifier",
-  "biometricReason": "Déverrouillez MunokoLive pour accéder à votre compte",
-  "authenticationFailed": "Échec de l'authentification. Réessayez.",
-  "secureAppTitle": "MunokoLive Sécurisé",
-  "retryButton": "Réessayer",
-  "errorTitle": "ERREUR :",
-  "errorDetails": "\nDÉTAILS :",
-  "errorContext": "\nCONTEXTE :",
-  "errorTrace": "\nTRACE (Top 5) :",
-  "unknownTechnicalError": "Erreur Technique Non Identifiée :\n",
-  "unknownError": "Erreur inconnue",
-  "errorDisplayError": "Erreur d'affichage de l'erreur : ",
-  "systemDiagnostic": "Diagnostic Système",
-  "restartApp": "Relancer l'application",
-  "pleaseRestartApp": "Veuillez redémarrer l'application",
-  "welcomeSuperAdmin": "Bienvenue, Super Admin ! Vous avez tous les pouvoirs.",
-  "debateTopicTitle": "Sujet de Débat",
-  "topicTitleLabel": "Titre du sujet",
-  "descriptionLabel": "Description (Optionnel)",
-  "cancelButton": "Annuler",
-  "publishButton": "Publier",
-  "activeDebateTopic": "SUJET DE DÉBAT EN COURS",
-  "membersInCommunion": "membres en communion actuellement",
-  "typingIndicator": "écrit...",
-  "replyTo": "Réponse à",
-  "defineDebateTopicTooltip": "Définir un sujet de débat",
-  "inCommunion": "en communion",
-    "welcomeVisionMunokolive": "Bienvenue dans la Vision Munokolive.",
-    "musiciansSalon": "Salon des Musiciens",
-    "pastorsSalon": "Salon des Pasteurs",
-    "cannotMessageSelf": "Vous ne pouvez pas vous écrire à vous-même.",
-    "sendError": "Erreur d'envoi : ",
-    "viewProfile": "Voir Profil",
-    "privateMessage": "Message Privé",
-    "createAccountLink": "Créer un compte",
-    "impossibleOpenWhatsApp": "Impossible d'ouvrir WhatsApp",
-    "errorOpeningWhatsApp": "Erreur lors de l'ouverture de WhatsApp",
-    "numberNotAvailable": "Numéro non disponible",
-    "impossibleLaunchCall": "Impossible de lancer l'appel",
-    "promoteAdmin": "Promouvoir administrateur ?",
-    "demoteAdmin": "Rétrograder administrateur ?",
-    "confirmAdminRoleChange": "Êtes-vous sûr de vouloir {action} ce membre au rang d'Administrateur ?",
-  "@confirmAdminRoleChange": {
-    "placeholders": {
-      "action": { "type": "String" }
-    }
-  },
-    "promoteAction": "Promouvoir",
-    "demoteAction": "Rétrograder",
-    "cancel": "Annuler",
-    "confirm": "Confirmer",
-    "roleUpdatedSuccess": "Rôle mis à jour avec succès !",
-    "errorUpdate": "Erreur lors de la mise à jour : {error}",
-  "@errorUpdate": {
-    "placeholders": {
-      "error": { "type": "String" }
-    }
-  },
-    "churchNotSpecified": "Église non spécifiée",
-    "memberDistance": "Frère {name} est à {distance}",
-  "@memberDistance": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "distance": { "type": "String" }
-    }
-  },
-    "writePrivate": "Écrire en Privé",
-    "call": "Appeler",
-    "numberCopied": "Numéro copié !",
-    "whatsapp": "WhatsApp",
-    "sms": "SMS",
-    "map": "Carte",
-    "locationNotAvailable": "Localisation non disponible",
-    "mission": "Mission",
-    "contactCaps": "CONTACTER",
-    "informations": "Informations",
-    "nearbyUserTitle": "👋 {category} à proximité !",
-  "@nearbyUserTitle": {
-    "placeholders": {
-      "category": { "type": "String" }
-    }
-  },
-    "nearbyUserBody": "{name} est connecté près de vous. Connectez-vous !",
-  "@nearbyUserBody": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
-    "memberNearbyDiscreet": "Membre à proximité (Mode Discret)",
-    "archiveMode": "Mode Archives",
-    "archiveModeSubtitle": "Connectez-vous pour synchroniser le radar.",
-    "radarSynced": "Radar synchronisé avec succès ! 📡",
-    "gpsDisabled": "GPS Désactivé",
-    "permissionDenied": "Permission Refusée",
-    "radarError": "Erreur Radar",
-    "enableLocationMessage": "Veuillez activer la localisation pour voir le radar.",
-    "enableGPS": "Activer le GPS",
-    "openSettings": "Ouvrir Paramètres",
-    "filterMusicians": "Musiciens",
-    "filterMenOfGod": "Hommes de Dieu",
-    "filterPlaces": "Lieux",
-    "categoryMember": "Membre",
-    "categoryPlace": "Lieu",
-    "categoryChurch": "Église",
-    "categoryStudio": "Studio d'enregistrement",
-    "categoryRehearsal": "Salle de répétition",
-    "categoryEventSpace": "Espace événementiel"
+    "appTitle":  "MunokoLive Music",
+    "@appTitle":  {
+                      "description":  "Titre de l\u0027application"
+                  },
+    "welcomeMessage":  "Bienvenue sur MunokoLive",
+    "@welcomeMessage":  {
+                            "description":  "Message de bienvenue affiché à l\u0027utilisateur"
+                        },
+    "loginButton":  "Se connecter",
+    "@loginButton":  {
+                         "description":  "Bouton de connexion"
+                     },
+    "registerButton":  "S\u0027inscrire",
+    "@registerButton":  {
+                            "description":  "Bouton d\u0027inscription"
+                        },
+    "homeTab":  "Accueil",
+    "@homeTab":  {
+                     "description":  "Onglet bas: Accueil"
+                 },
+    "eventsTab":  "Événements",
+    "@eventsTab":  {
+                       "description":  "Onglet bas: Événements"
+                   },
+    "placesTab":  "Lieux",
+    "@placesTab":  {
+                       "description":  "Onglet bas: Lieux"
+                   },
+    "profileTab":  "Profil",
+    "@profileTab":  {
+                        "description":  "Onglet bas: Profil"
+                    },
+    "settingsTitle":  "Paramètres",
+    "@settingsTitle":  {
+                           "description":  "Titre de la page Paramètres"
+                       },
+    "languageOption":  "Langue",
+    "@languageOption":  {
+                            "description":  "Option des paramètres: langue"
+                        },
+    "themeOption":  "Thème",
+    "@themeOption":  {
+                         "description":  "Option des paramètres: thème"
+                     },
+    "biometricsOption":  "Biométrie",
+    "@biometricsOption":  {
+                              "description":  "Option des paramètres: biométrie"
+                          },
+    "notificationsOption":  "Notifications",
+    "@notificationsOption":  {
+                                 "description":  "Option des paramètres: notifications"
+                             },
+    "emailLabel":  "Email",
+    "@emailLabel":  {
+                        "description":  "Libellé du champ email"
+                    },
+    "passwordLabel":  "Mot de passe",
+    "@passwordLabel":  {
+                           "description":  "Libellé du champ mot de passe"
+                       },
+    "confirmPasswordLabel":  "Confirmer le mot de passe",
+    "@confirmPasswordLabel":  {
+                                  "description":  "Libellé de confirmation du mot de passe"
+                              },
+    "referralCodeLabel":  "Code de parrainage",
+    "@referralCodeLabel":  {
+                               "description":  "Libellé du champ code de parrainage"
+                           },
+    "forgotPassword":  "Mot de passe oublié ?",
+    "@forgotPassword":  {
+                            "description":  "Lien de réinitialisation du mot de passe"
+                        },
+    "noAccount":  "Pas encore de compte ?",
+    "@noAccount":  {
+                       "description":  "Invite l\u0027utilisateur s\u0027il n\u0027a pas de compte"
+                   },
+    "alreadyAccount":  "Déjà un compte ?",
+    "@alreadyAccount":  {
+                            "description":  "Invite pour utilisateurs qui ont déjà un compte"
+                        },
+    "invalidEmail":  "Email invalide",
+    "@invalidEmail":  {
+                          "description":  "Erreur indiquant que l\u0027email est invalide"
+                      },
+    "@invalidEmailMessage":  {
+                                 "description":  "Erreur quand l\u0027adresse email est invalide"
+                             },
+    "passwordMinLength":  "Min 6 caractères",
+    "@passwordMinLength":  {
+                               "description":  "Avertissement quand le mot de passe est trop court"
+                           },
+    "passwordsMismatch":  "Les mots de passe ne correspondent pas",
+    "@passwordsMismatch":  {
+                               "description":  "Erreur quand les mots de passe ne correspondent pas"
+                           },
+    "referralCodeRequired":  "Le code parrain est obligatoire",
+    "@referralCodeRequired":  {
+                                  "description":  "Erreur quand le code parrain est requis/manquant"
+                              },
+    "authenticating":  "Authentification...",
+    "@authenticating":  {
+                            "description":  "Statut : authentification en cours"
+                        },
+    "success":  "Succès !",
+    "@success":  {
+                     "description":  "Statut : opération réussie"
+                 },
+    "verifying":  "Vérification...",
+    "@verifying":  {
+                       "description":  "Statut : vérification des données/processus"
+                   },
+    "initializing":  "Initialisation...",
+    "@initializing":  {
+                          "description":  "Statut : initialisation de l\u0027application"
+                      },
+    "redirecting":  "Redirection...",
+    "@redirecting":  {
+                         "description":  "Statut : redirection en cours"
+                     },
+    "creatingAccount":  "Création du compte...",
+    "@creatingAccount":  {
+                             "description":  "Statut : création du compte en cours"
+                         },
+    "welcome":  "Bienvenue !",
+    "@welcome":  {
+                     "description":  "Message de bienvenue générique"
+                 },
+    "fixFormErrors":  "Veuillez corriger les erreurs dans le formulaire",
+    "@fixFormErrors":  {
+                           "description":  "Invite l\u0027utilisateur à corriger le formulaire"
+                       },
+    "invalidReferralCode":  "Code parrain invalide ou introuvable",
+    "@invalidReferralCode":  {
+                                 "description":  "Erreur quand le code parrain est invalide ou manquant"
+                             },
+    "networkError":  "Problème de connexion internet.",
+    "@networkError":  {
+                          "description":  "Erreur de connectivité réseau"
+                      },
+    "weakPassword":  "Le mot de passe est trop faible (6 caractères min).",
+    "@weakPassword":  {
+                          "description":  "Avertissement si le mot de passe est trop faible"
+                      },
+    "emailInUse":  "Cet email est déjà utilisé par un autre compte.",
+    "@emailInUse":  {
+                        "description":  "Erreur quand l\u0027email est déjà enregistré"
+                    },
+    "invalidEmailMessage":  "L\u0027adresse email est invalide.",
+    "genericError":  "Une erreur est survenue",
+    "@genericError":  {
+                          "description":  "Message d\u0027erreur générique"
+                      },
+    "rateLimitError":  "Trop de tentatives. Veuillez patienter un moment.",
+    "@rateLimitError":  {
+                            "description":  "Affiché quand l\u0027utilisateur atteint les limites d\u0027opérations"
+                        },
+    "invalidCredentials":  "Email ou mot de passe incorrect. Si vous n\u0027avez pas encore de compte, veuillez vous inscrire.",
+    "@invalidCredentials":  {
+                                "description":  "Erreur quand les identifiants sont incorrects"
+                            },
+    "securityDelay":  "Pour des raisons de sécurité, veuillez patienter avant de réessayer.",
+    "@securityDelay":  {
+                           "description":  "Indique d\u0027attendre à cause de la limitation de sécurité"
+                       },
+    "welcomeBack":  "Heureux de vous revoir !",
+    "@welcomeBack":  {
+                         "description":  "Message amical quand l\u0027utilisateur revient"
+                     },
+    "joinFamily":  "Rejoindre la Famille",
+    "@joinFamily":  {
+                        "description":  "CTA pour rejoindre la communauté/famille"
+                    },
+    "loginToContinue":  "Connectez-vous pour continuer",
+    "@loginToContinue":  {
+                             "description":  "Invite l\u0027utilisateur à se connecter pour continuer"
+                         },
+    "createAccountSubtitle":  "Créez votre compte en quelques secondes",
+    "@createAccountSubtitle":  {
+                                   "description":  "Sous-titre incitant à une inscription rapide"
+                               },
+    "emailRequired":  "Email requis",
+    "@emailRequired":  {
+                           "description":  "Validation quand l\u0027email est requis"
+                       },
+    "placesTitle":  "Nos Lieux",
+    "@placesTitle":  {
+                         "description":  "Titre de la page Lieux"
+                     },
+    "addPlace":  "AJOUTER",
+    "@addPlace":  {
+                      "description":  "Action pour ajouter un nouveau lieu"
+                  },
+    "searchPlaceholder":  "Rechercher (ex: Yopougon, Studio...)",
+    "@searchPlaceholder":  {
+                               "description":  "Placeholder du champ de recherche pour les Lieux"
+                           },
+    "allCategories":  "Tous",
+    "@allCategories":  {
+                           "description":  "Filtre de catégorie: tous les lieux"
+                       },
+    "church":  "Église",
+    "@church":  {
+                    "description":  "Catégorie de lieu : église"
+                },
+    "rehearsalRoom":  "Salle de répétition",
+    "@rehearsalRoom":  {
+                           "description":  "Catégorie de lieu : salle de répétition"
+                       },
+    "recordingStudio":  "Studio d\u0027enregistrement",
+    "@recordingStudio":  {
+                             "description":  "Catégorie de lieu : studio d\u0027enregistrement"
+                         },
+    "eventSpace":  "Espace événementiel",
+    "@eventSpace":  {
+                        "description":  "Catégorie de lieu : espace événementiel"
+                    },
+    "listUpdated":  "Liste mise à jour !",
+    "@listUpdated":  {
+                         "description":  "Toast affiché quand la liste est mise à jour"
+                     },
+    "errorPrefix":  "Erreur : ",
+    "@errorPrefix":  {
+                         "description":  "Préfixe utilisé avant les descriptions d\u0027erreur"
+                     },
+    "noPlacesFound":  "Aucun lieu trouvé.",
+    "@noPlacesFound":  {
+                           "description":  "Affiché quand la recherche ne trouve aucun lieu"
+                       },
+    "closestPlace":  "Le plus proche",
+    "@closestPlace":  {
+                          "description":  "Indique le lieu le plus proche"
+                      },
+    "addressUnspecified":  "Adresse non spécifiée",
+    "@addressUnspecified":  {
+                                "description":  "Affiché quand l\u0027adresse du lieu est manquante"
+                            },
+    "mapOpenError":  "Impossible d\u0027ouvrir la carte",
+    "@mapOpenError":  {
+                          "description":  "Erreur quand l\u0027application carte ne s\u0027ouvre pas"
+                      },
+    "proposeSacredPlace":  "Proposer un lieu sacré",
+    "@proposeSacredPlace":  {
+                                "description":  "CTA pour proposer un lieu sacré"
+                            },
+    "exteriorFacade":  "Extérieur (Façade)",
+    "@exteriorFacade":  {
+                            "description":  "Libellé pour la photo de façade extérieure"
+                        },
+    "interiorOptional":  "Intérieur (Optionnel)",
+    "@interiorOptional":  {
+                              "description":  "Libellé pour la photo intérieure optionnelle"
+                          },
+    "placeNameLabel":  "Nom du lieu",
+    "@placeNameLabel":  {
+                            "description":  "Libellé du champ nom du lieu"
+                        },
+    "categoryLabel":  "Catégorie",
+    "@categoryLabel":  {
+                           "description":  "Libellé du champ catégorie"
+                       },
+    "managerNameLabel":  "Nom du responsable",
+    "@managerNameLabel":  {
+                              "description":  "Libellé du champ nom du responsable"
+                          },
+    "contactPhoneLabel":  "Contact (Téléphone)",
+    "@contactPhoneLabel":  {
+                               "description":  "Libellé du champ contact téléphone"
+                           },
+    "markThisPlaceGps":  "MARQUER CE LIEU (GPS ICI)",
+    "@markThisPlaceGps":  {
+                              "description":  "CTA pour marquer la position GPS actuelle comme celle du lieu"
+                          },
+    "positionSavedEdit":  "Position Enregistrée ! (Modifier)",
+    "@positionSavedEdit":  {
+                               "description":  "Toast indiquant que la position est enregistrée avec suggestion de modification"
+                           },
+    "submitForValidation":  "SOUMETTRE À VALIDATION",
+    "@submitForValidation":  {
+                                 "description":  "CTA pour soumettre le lieu à la validation de l\u0027administrateur"
+                             },
+    "statusPreparing":  "Préparation...",
+    "statusUploadingMainPhoto":  "Envoi de la photo principale...",
+    "@statusUploadingMainPhoto":  {
+                                      "description":  "Statut lors de l\u0027envoi de la photo principale du lieu"
+                                  },
+    "statusUploadingInteriorPhoto":  "Envoi de la photo intérieure...",
+    "@statusUploadingInteriorPhoto":  {
+                                          "description":  "Statut lors de l\u0027envoi de la photo intérieure optionnelle"
+                                      },
+    "statusSavingPlace":  "Enregistrement du lieu...",
+    "@statusSavingPlace":  {
+                               "description":  "Statut lors de l\u0027enregistrement des informations du lieu"
+                           },
+    "positionCaptured":  "📍 Position capturée : {lat}, {lng}",
+    "@positionCaptured":  {
+                              "description":  "Toast affichant les coordonnées GPS capturées",
+                              "placeholders":  {
+                                                   "lat":  {
+                                                               "type":  "double"
+                                                           },
+                                                   "lng":  {
+                                                               "type":  "double"
+                                                           }
+                                               }
+                          },
+    "gpsCaptureError":  "Impossible de capturer la position. Vérifiez votre GPS.",
+    "@gpsCaptureError":  {
+                             "description":  "Erreur quand la capture de position GPS échoue"
+                         },
+    "pleaseAddImage":  "Veuillez ajouter une image",
+    "@pleaseAddImage":  {
+                            "description":  "Invite à ajouter une image"
+                        },
+    "pleaseCapturePosition":  "Veuillez capturer la position du lieu",
+    "@pleaseCapturePosition":  {
+                                   "description":  "Invite à capturer la position GPS"
+                               },
+    "userNotLoggedIn":  "Utilisateur non connecté",
+    "@userNotLoggedIn":  {
+                             "description":  "Erreur quand une authentification est requise"
+                         },
+    "placeSubmittedTitle":  "Lieu soumis avec succès",
+    "placePublishedImmediately":  "Lieu validé et publié immédiatement.",
+    "placeProposalSent":  "Votre proposition pour {name} a été envoyée.",
+    "@placeProposalSent":  {
+                               "placeholders":  {
+                                                    "name":  {
+                                                                 "type":  "String"
+                                                             }
+                                                }
+                           },
+    "placeAddedAndValidated":  "✅ Lieu ajouté et validé !",
+    "placeSubmittedPending":  "Lieu soumis avec succès ! En attente de validation.",
+    "pleaseEnterEmail":  "Veuillez entrer votre email",
+    "resetEmailSent":  "Email de réinitialisation envoyé",
+    "completeProfileTitle":  "Complétez votre profil",
+    "completeProfileSubtitle":  "Une photo et vos informations sont requises pour la validation.",
+    "firstNameLabel":  "Prénom",
+    "lastNameLabel":  "Nom",
+    "firstNameRequired":  "Prénom requis",
+    "lastNameRequired":  "Nom requis",
+    "birthDateLabel":  "Date de naissance",
+    "birthDateRequired":  "Date requise",
+    "churchLabel":  "Église / Paroisse",
+    "churchRequired":  "Église requise",
+    "referralCodeActive":  "Parrainage activé",
+    "referralCodeMandatory":  "Code Parrain (Obligatoire)",
+    "privacyPolicyAccept":  "Veuillez accepter la Politique de Confidentialité",
+    "photoRequired":  "Veuillez ajouter une photo de profil (Obligatoire)",
+    "optimizingPhoto":  "Optimisation de votre photo en cours...",
+    "optimizingNetwork":  "Optimisation et vérification réseau...",
+    "slowConnectionMessage":  "Cela prend un peu plus de temps que prévu...\nVérification de la connexion et optimisation de la photo en cours.",
+    "uploadingPhoto":  "Envoi de la photo (cela peut prendre un moment)...",
+    "savingProfile":  "Enregistrement du profil...",
+    "finished":  "Terminé !",
+    "musician":  "Musicien",
+    "singerAndInstrumentalist":  "Chantre \u0026 Instrumentiste",
+    "minister":  "Ministre",
+    "servantOfGod":  "Serviteur de Dieu",
+    "media":  "Média",
+    "photoVideoSound":  "Photo, Vidéo, Son",
+    "labelManager":  "Label / Manager",
+    "producer":  "Producteur",
+    "organizer":  "Organisateur",
+    "eventsAndConcerts":  "Événements \u0026 Concerts",
+    "particular":  "Particulier",
+    "musicLover":  "Mélomane / Adorateur",
+    "role":  "Rôle",
+    "selectRole":  "Sélectionnez votre rôle",
+    "instrument":  "Instrument",
+    "selectInstrument":  "Sélectionnez votre instrument",
+    "privacyPolicyText":  "J\u0027accepte la Politique de Confidentialité et les Conditions d\u0027Utilisation",
+    "readAndAccept":  "J\u0027ai lu et j\u0027accepte la ",
+    "privacyPolicy":  "Politique de Confidentialité",
+    "ofAppByAuthor":  " de Munokolive Music rédigée par Christian Anisonok.",
+    "save":  "ENREGISTRER",
+    "instrumentOrRole":  "Instrument / Rôle",
+    "ministry":  "Ministère",
+    "selectionRequired":  "Sélection requise",
+    "rolePianist":  "Pianiste",
+    "roleDrummer":  "Batteur",
+    "roleBassist":  "Bassiste",
+    "roleGuitarist":  "Guitariste",
+    "roleSaxophonist":  "Saxophoniste",
+    "rolePercussionist":  "Percussionniste",
+    "roleViolinist":  "Violoniste",
+    "roleSynthesizer":  "Synthétiseur",
+    "roleTrumpeter":  "Trompettiste",
+    "roleFlutist":  "Flûtiste",
+    "roleSinger":  "Chantre",
+    "roleChoirMaster":  "Maître de chœur",
+    "roleMusicTrainer":  "Formateur Musique",
+    "roleSoundEngineer":  "Ingénieur son",
+    "roleBeatmaker":  "Beatmaker",
+    "rolePastor":  "Pasteur",
+    "roleProphet":  "Prophète",
+    "roleDeacon":  "Diacre",
+    "roleEvangelist":  "Évangéliste",
+    "roleDoctor":  "Docteur",
+    "roleApostle":  "Apôtre",
+    "requiredField":  "Ce champ est requis",
+    "passwordUpdatedSuccess":  "Mot de passe mis à jour avec succès !",
+    "updatePasswordTitle":  "Mise à jour du mot de passe",
+    "newPasswordLabel":  "Nouveau mot de passe",
+    "updateButton":  "Mettre à jour",
+    "cannotOpenWhatsApp":  "Impossible d\u0027ouvrir WhatsApp",
+    "@cannotOpenWhatsApp":  {
+                                "description":  "Erreur quand WhatsApp ne peut pas s\u0027ouvrir"
+                            },
+    "congratulations":  "FÉLICITATIONS !",
+    "@congratulations":  {
+                             "description":  "Titre de célébration après validation réussie"
+                         },
+    "accountValidated":  "Compte validé",
+    "@accountValidated":  {
+                              "description":  "Indique que le compte a été validé"
+                          },
+    "redirectionInProgress":  "Bienvenue sur Munoko Live Music.\nRedirection en cours...",
+    "@redirectionInProgress":  {
+                                   "description":  "Message affiché lors de la redirection après validation"
+                               },
+    "verificationInProgress":  "VÉRIFICATION EN COURS",
+    "@verificationInProgress":  {
+                                    "description":  "Message affiché pendant la vérification du profil/processus"
+                                },
+    "profileAnalysisMessage":  "Votre profil est en cours d\u0027analyse.\nMerci de patienter pendant que nous validons vos informations.",
+    "@profileAnalysisMessage":  {
+                                    "description":  "Explique la phase d\u0027analyse du profil durant la validation"
+                                },
+    "refreshingStatus":  "Actualisation du statut...",
+    "@refreshingStatus":  {
+                              "description":  "Texte de statut lors de l\u0027actualisation de l\u0027état utilisateur"
+                          },
+    "refreshStatusButton":  "ACTUALISER MON STATUT",
+    "@refreshStatusButton":  {
+                                 "description":  "CTA pour actualiser la validation/le statut"
+                             },
+    "supportButton":  "Support",
+    "@supportButton":  {
+                           "description":  "CTA pour accéder au support"
+                       },
+    "quitButton":  "Quitter",
+    "@quitButton":  {
+                        "description":  "CTA pour quitter la session ou la page"
+                    },
+    "chooseLanguageTitle":  "Choisir la langue",
+    "@chooseLanguageTitle":  {
+                                 "description":  "Titre pour la page ou modale de choix de langue"
+                             },
+    "biometricNotAvailable":  "⚠️ Biométrie non disponible sur cet appareil",
+    "@biometricNotAvailable":  {
+                                   "description":  "Indique que la biométrie n\u0027est pas supportée"
+                               },
+    "biometricEnabledMsg":  "🛡️ Protection biométrique activée !",
+    "@biometricEnabledMsg":  {
+                                 "description":  "Toast indiquant que la biométrie est activée"
+                             },
+    "biometricDisabledMsg":  "🔓 Protection désactivée",
+    "@biometricDisabledMsg":  {
+                                  "description":  "Toast indiquant que la biométrie est désactivée"
+                              },
+    "notificationsEnabledMsg":  "Notifications activées",
+    "@notificationsEnabledMsg":  {
+                                     "description":  "Toast indiquant que les notifications sont activées"
+                                 },
+    "notificationsDisabledMsg":  "Notifications désactivées",
+    "@notificationsDisabledMsg":  {
+                                      "description":  "Toast indiquant que les notifications sont désactivées"
+                                  },
+    "helpSupportTitle":  "AIDE \u0026 SUPPORT",
+    "@helpSupportTitle":  {
+                              "description":  "Titre de la page Aide \u0026 Support"
+                          },
+    "supportHeaderTitle":  "MUNOKOLIVE SUPPORT",
+    "@supportHeaderTitle":  {
+                                "description":  "Titre d\u0027en-tête dans la page Support"
+                            },
+    "supportHeaderSlogan":  "À votre service pour que le service de Dieu ne s\u0027arrête jamais.",
+    "@supportHeaderSlogan":  {
+                                 "description":  "Slogan affiché dans la page Support"
+                             },
+    "sectionAiTitle":  "1. ASSISTANCE IA (MUNO-IA)",
+    "@sectionAiTitle":  {
+                            "description":  "Titre de la section Assistance IA"
+                        },
+    "sectionFaqTitle":  "2. FOIRE AUX QUESTIONS (FAQ)",
+    "@sectionFaqTitle":  {
+                             "description":  "Titre de la section FAQ"
+                         },
+    "sectionContactTitle":  "3. CONTACTER LE BUREAU",
+    "@sectionContactTitle":  {
+                                 "description":  "Titre de la section Contact Bureau"
+                             },
+    "sectionDiagnosticTitle":  "4. CENTRE DE DIAGNOSTIC",
+    "@sectionDiagnosticTitle":  {
+                                    "description":  "Titre de la section Centre de Diagnostic"
+                                },
+    "supportWhatsappButton":  "SUPPORT WHATSAPP",
+    "@supportWhatsappButton":  {
+                                   "description":  "CTA pour contacter le support via WhatsApp"
+                               },
+    "callAdminButton":  "Appeler l\u0027Administrateur",
+    "@callAdminButton":  {
+                             "description":  "CTA pour appeler un administrateur"
+                         },
+    "urgentValidationsHint":  "Recommandé pour les validations urgentes",
+    "@urgentValidationsHint":  {
+                                   "description":  "Indication de validation urgente"
+                               },
+    "supportEmailLabel":  "Support Email",
+    "@supportEmailLabel":  {
+                               "description":  "Libellé pour l\u0027email de support"
+                           },
+    "emergencyReportLabel":  "Signalement d\u0027Urgence",
+    "@emergencyReportLabel":  {
+                                  "description":  "Libellé pour le signalement d\u0027urgence"
+                              },
+    "emergencyReportSubtitle":  "Signaler un abus ou piratage",
+    "@emergencyReportSubtitle":  {
+                                     "description":  "Sous-titre pour l\u0027élément de signalement d\u0027urgence"
+                                 },
+    "cacheCleared":  "Cache vidé avec succès !",
+    "@appVersionLabel":  {
+                             "description":  "Libellé indiquant la version de l\u0027application"
+                         },
+    "appVersionLabel":  "Version de l\u0027App",
+    "@serverStatusLabel":  {
+                               "description":  "Libellé indiquant le statut du serveur"
+                           },
+    "serverStatusLabel":  "Statut Serveur",
+    "@serverOperational":  {
+                               "description":  "Texte indiquant que le serveur est opérationnel"
+                           },
+    "serverOperational":  "Opérationnel",
+    "@usefulIfImagesMessage":  {
+                                   "description":  "Texte d\u0027aide pour l\u0027utilité du nettoyage du cache"
+                               },
+    "usefulIfImagesMessage":  "Utile si les images ne s\u0027affichent plus correctement.",
+    "aboutTitle":  "À PROPOS",
+    "@aboutTitle":  {
+                        "description":  "Titre de la page À Propos"
+                    },
+    "appNameTitle":  "MUNOKOLIVE MUSIC",
+    "@appNameTitle":  {
+                          "description":  "Nom de l\u0027application affiché dans À Propos"
+                      },
+    "appSlogan":  "Connecter le Talent à l’Onction,\nBâtir l’Horizon de Demain",
+    "@appSlogan":  {
+                       "description":  "Slogan de l\u0027application dans À Propos"
+                   },
+    "sectionEssenceTitle":  "L\u0027ESSENCE DU PROJET",
+    "@sectionEssenceTitle":  {
+                                 "description":  "Titre de la section Essence"
+                             },
+    "sectionVisionTitle":  "LA VISION DE L’HORIZON",
+    "@sectionVisionTitle":  {
+                                "description":  "Titre de la section Vision"
+                            },
+    "sectionVisionSubtitle":  "(Pourquoi Munokolive ?)",
+    "@sectionVisionSubtitle":  {
+                                   "description":  "Sous-titre de la section Vision"
+                               },
+    "sectionOrganizationTitle":  "NOTRE ORGANISATION",
+    "@sectionOrganizationTitle":  {
+                                      "description":  "Titre de la section Organisation"
+                                  },
+    "sectionOrganizationSubtitle":  "LE CORPS DU CHRIST",
+    "@sectionOrganizationSubtitle":  {
+                                         "description":  "Sous-titre de la section Organisation"
+                                     },
+    "sectionTechTitle":  "RÉVOLUTION TECHNOLOGIQUE",
+    "@sectionTechTitle":  {
+                              "description":  "Titre de la section Technologie"
+                          },
+    "sectionTechSubtitle":  "AU SERVICE DU SPIRITUEL",
+    "@sectionTechSubtitle":  {
+                                 "description":  "Sous-titre de la section Technologie"
+                             },
+    "sectionGoldenRuleTitle":  "NOTRE RÈGLE D’OR",
+    "@sectionGoldenRuleTitle":  {
+                                    "description":  "Titre de la section Règle d\u0027or"
+                                },
+    "sectionGoldenRuleSubtitle":  "LE RESPECT MUTUEL",
+    "@sectionGoldenRuleSubtitle":  {
+                                       "description":  "Sous-titre de la section Règle d\u0027or"
+                                   },
+    "founderQuoteText":  "Nous sommes à la cuisine de Gospel Family. Ici, tout le monde travaille. Cette plateforme est le socle de ce que nous bâtirons dans les années à venir par la grâce de Dieu. Restons vigilants, restons unis, et gardons les yeux fixés sur l\u0027horizon.",
+    "@founderQuoteText":  {
+                              "description":  "Contenu de la citation du fondateur"
+                          },
+    "founderSignature":  "— Christian ANISONOK",
+    "@founderSignature":  {
+                              "description":  "Signature du fondateur"
+                          },
+    "cguHeaderTitle":  "CONDITIONS GÉNÉRALES D\u0027UTILISATION (CGU)\nMUNOKOLIVE MUSIC",
+    "@cguHeaderTitle":  {
+                            "description":  "Titre d\u0027en-tête de la page CGU"
+                        },
+    "cguVersionLine":  "Version 1.0 – \"La Vision du Futur à Long Terme\"",
+    "@cguVersionLine":  {
+                            "description":  "Sous-titre de version sur la page CGU"
+                        },
+    "welcomeFamilyDialogTitle":  "BIENVENUE DANS LA FAMILLE",
+    "@welcomeFamilyDialogTitle":  {
+                                      "description":  "Titre du dialogue lors de l\u0027acceptation des CGU"
+                                  },
+    "welcomeFamilyDialogSubtitle":  "La Vision du Futur commence maintenant.",
+    "@welcomeFamilyDialogSubtitle":  {
+                                         "description":  "Sous-titre du dialogue lors de l\u0027acceptation des CGU"
+                                     },
+    "privacyTitleAppBar":  "Confidentialité",
+    "@privacyTitleAppBar":  {
+                                "description":  "Titre de l\u0027AppBar de la page Confidentialité"
+                            },
+    "privacyHeaderTitle":  "POLITIQUE DE CONFIDENTIALITÉ\nMUNOKOLIVE MUSIC",
+    "@privacyHeaderTitle":  {
+                                "description":  "Titre d\u0027en-tête de la page de confidentialité"
+                            },
+    "lastUpdateLabel":  "Dernière mise à jour :",
+    "@lastUpdateLabel":  {
+                             "description":  "Libellé précédant la date de dernière mise à jour"
+                         },
+    "exclusivePropertyLine":  "Propriété exclusive de : M. Christian ANISONOK",
+    "@exclusivePropertyLine":  {
+                                   "description":  "Ligne indiquant la propriété sur la page de confidentialité"
+                               },
+    "legalProtectionMentionTitle":  "MENTION LÉGALE DE PROTECTION",
+    "@legalProtectionMentionTitle":  {
+                                         "description":  "Titre de la mention légale de protection"
+                                     },
+    "pleaseAuthenticate":  "Veuillez vous authentifier",
+    "biometricReason":  "Déverrouillez MunokoLive pour accéder à votre compte",
+    "authenticationFailed":  "Échec de l\u0027authentification. Réessayez.",
+    "secureAppTitle":  "MunokoLive Sécurisé",
+    "retryButton":  "Réessayer",
+    "errorTitle":  "ERREUR :",
+    "errorDetails":  "\nDÉTAILS :",
+    "errorContext":  "\nCONTEXTE :",
+    "errorTrace":  "\nTRACE (Top 5) :",
+    "unknownTechnicalError":  "Erreur Technique Non Identifiée :\n",
+    "unknownError":  "Erreur inconnue",
+    "errorDisplayError":  "Erreur d\u0027affichage de l\u0027erreur : ",
+    "systemDiagnostic":  "Diagnostic Système",
+    "restartApp":  "Relancer l\u0027application",
+    "pleaseRestartApp":  "Veuillez redémarrer l\u0027application",
+    "welcomeSuperAdmin":  "Bienvenue, Super Admin ! Vous avez tous les pouvoirs.",
+    "debateTopicTitle":  "Sujet de Débat",
+    "topicTitleLabel":  "Titre du sujet",
+    "descriptionLabel":  "Description (Optionnel)",
+    "cancelButton":  "Annuler",
+    "publishButton":  "Publier",
+    "activeDebateTopic":  "SUJET DE DÉBAT EN COURS",
+    "membersInCommunion":  "membres en communion actuellement",
+    "typingIndicator":  "écrit...",
+    "replyTo":  "Réponse à",
+    "defineDebateTopicTooltip":  "Définir un sujet de débat",
+    "inCommunion":  "en communion",
+    "welcomeVisionMunokolive":  "Bienvenue dans la Vision Munokolive.",
+    "musiciansSalon":  "Salon des Musiciens",
+    "pastorsSalon":  "Salon des Pasteurs",
+    "cannotMessageSelf":  "Vous ne pouvez pas vous écrire à vous-même.",
+    "sendError":  "Erreur d\u0027envoi : ",
+    "viewProfile":  "Voir Profil",
+    "privateMessage":  "Message Privé",
+    "createAccountLink":  "Créer un compte",
+    "impossibleOpenWhatsApp":  "Impossible d\u0027ouvrir WhatsApp",
+    "errorOpeningWhatsApp":  "Erreur lors de l\u0027ouverture de WhatsApp",
+    "numberNotAvailable":  "Numéro non disponible",
+    "impossibleLaunchCall":  "Impossible de lancer l\u0027appel",
+    "promoteAdmin":  "Promouvoir administrateur ?",
+    "demoteAdmin":  "Rétrograder administrateur ?",
+    "confirmAdminRoleChange":  "Êtes-vous sûr de vouloir {action} ce membre au rang d\u0027Administrateur ?",
+    "@confirmAdminRoleChange":  {
+                                    "placeholders":  {
+                                                         "action":  {
+                                                                        "type":  "String"
+                                                                    }
+                                                     }
+                                },
+    "promoteAction":  "Promouvoir",
+    "demoteAction":  "Rétrograder",
+    "cancel":  "Annuler",
+    "confirm":  "Confirmer",
+    "roleUpdatedSuccess":  "Rôle mis à jour avec succès !",
+    "errorUpdate":  "Erreur lors de la mise à jour : {error}",
+    "@errorUpdate":  {
+                         "placeholders":  {
+                                              "error":  {
+                                                            "type":  "String"
+                                                        }
+                                          }
+                     },
+    "churchNotSpecified":  "Église non spécifiée",
+    "memberDistance":  "Frère {name} est à {distance}",
+    "@memberDistance":  {
+                            "placeholders":  {
+                                                 "name":  {
+                                                              "type":  "String"
+                                                          },
+                                                 "distance":  {
+                                                                  "type":  "String"
+                                                              }
+                                             }
+                        },
+    "writePrivate":  "Écrire en Privé",
+    "call":  "Appeler",
+    "numberCopied":  "Numéro copié !",
+    "whatsapp":  "WhatsApp",
+    "sms":  "SMS",
+    "map":  "Carte",
+    "locationNotAvailable":  "Localisation non disponible",
+    "mission":  "Mission",
+    "contactCaps":  "CONTACTER",
+    "informations":  "Informations",
+    "nearbyUserTitle":  "👋 {category} à proximité !",
+    "@nearbyUserTitle":  {
+                             "placeholders":  {
+                                                  "category":  {
+                                                                   "type":  "String"
+                                                               }
+                                              }
+                         },
+    "nearbyUserBody":  "{name} est connecté près de vous. Connectez-vous !",
+    "@nearbyUserBody":  {
+                            "placeholders":  {
+                                                 "name":  {
+                                                              "type":  "String"
+                                                          }
+                                             }
+                        },
+    "memberNearbyDiscreet":  "Membre à proximité (Mode Discret)",
+    "archiveMode":  "Mode Archives",
+    "archiveModeSubtitle":  "Connectez-vous pour synchroniser le radar.",
+    "radarSynced":  "Radar synchronisé avec succès ! 📡",
+    "gpsDisabled":  "GPS Désactivé",
+    "permissionDenied":  "Permission Refusée",
+    "radarError":  "Erreur Radar",
+    "enableLocationMessage":  "Veuillez activer la localisation pour voir le radar.",
+    "enableGPS":  "Activer le GPS",
+    "openSettings":  "Ouvrir Paramètres",
+    "filterMusicians":  "Musiciens",
+    "filterMenOfGod":  "Hommes de Dieu",
+    "filterPlaces":  "Lieux",
+    "categoryMember":  "Membre",
+    "categoryPlace":  "Lieu",
+    "categoryChurch":  "Église",
+    "categoryStudio":  "Studio d\u0027enregistrement",
+    "categoryRehearsal":  "Salle de répétition",
+    "categoryEventSpace":  "Espace événementiel",
+    "@statusPreparing":  {
+                             "description":  "Description pour la clé \u0027statusPreparing\u0027"
+                         },
+    "@placeSubmittedTitle":  {
+                                 "description":  "Description pour la clé \u0027placeSubmittedTitle\u0027"
+                             },
+    "@placePublishedImmediately":  {
+                                       "description":  "Description pour la clé \u0027placePublishedImmediately\u0027"
+                                   },
+    "@placeAddedAndValidated":  {
+                                    "description":  "Description pour la clé \u0027placeAddedAndValidated\u0027"
+                                },
+    "@placeSubmittedPending":  {
+                                   "description":  "Description pour la clé \u0027placeSubmittedPending\u0027"
+                               },
+    "@pleaseEnterEmail":  {
+                              "description":  "Description pour la clé \u0027pleaseEnterEmail\u0027"
+                          },
+    "@resetEmailSent":  {
+                            "description":  "Description pour la clé \u0027resetEmailSent\u0027"
+                        },
+    "@completeProfileTitle":  {
+                                  "description":  "Description pour la clé \u0027completeProfileTitle\u0027"
+                              },
+    "@completeProfileSubtitle":  {
+                                     "description":  "Description pour la clé \u0027completeProfileSubtitle\u0027"
+                                 },
+    "@firstNameLabel":  {
+                            "description":  "Description pour la clé \u0027firstNameLabel\u0027"
+                        },
+    "@lastNameLabel":  {
+                           "description":  "Description pour la clé \u0027lastNameLabel\u0027"
+                       },
+    "@firstNameRequired":  {
+                               "description":  "Description pour la clé \u0027firstNameRequired\u0027"
+                           },
+    "@lastNameRequired":  {
+                              "description":  "Description pour la clé \u0027lastNameRequired\u0027"
+                          },
+    "@birthDateLabel":  {
+                            "description":  "Description pour la clé \u0027birthDateLabel\u0027"
+                        },
+    "@birthDateRequired":  {
+                               "description":  "Description pour la clé \u0027birthDateRequired\u0027"
+                           },
+    "@churchLabel":  {
+                         "description":  "Description pour la clé \u0027churchLabel\u0027"
+                     },
+    "@churchRequired":  {
+                            "description":  "Description pour la clé \u0027churchRequired\u0027"
+                        },
+    "@referralCodeActive":  {
+                                "description":  "Description pour la clé \u0027referralCodeActive\u0027"
+                            },
+    "@referralCodeMandatory":  {
+                                   "description":  "Description pour la clé \u0027referralCodeMandatory\u0027"
+                               },
+    "@privacyPolicyAccept":  {
+                                 "description":  "Description pour la clé \u0027privacyPolicyAccept\u0027"
+                             },
+    "@photoRequired":  {
+                           "description":  "Description pour la clé \u0027photoRequired\u0027"
+                       },
+    "@optimizingPhoto":  {
+                             "description":  "Description pour la clé \u0027optimizingPhoto\u0027"
+                         },
+    "@optimizingNetwork":  {
+                               "description":  "Description pour la clé \u0027optimizingNetwork\u0027"
+                           },
+    "@slowConnectionMessage":  {
+                                   "description":  "Description pour la clé \u0027slowConnectionMessage\u0027"
+                               },
+    "@uploadingPhoto":  {
+                            "description":  "Description pour la clé \u0027uploadingPhoto\u0027"
+                        },
+    "@savingProfile":  {
+                           "description":  "Description pour la clé \u0027savingProfile\u0027"
+                       },
+    "@finished":  {
+                      "description":  "Description pour la clé \u0027finished\u0027"
+                  },
+    "@musician":  {
+                      "description":  "Description pour la clé \u0027musician\u0027"
+                  },
+    "@singerAndInstrumentalist":  {
+                                      "description":  "Description pour la clé \u0027singerAndInstrumentalist\u0027"
+                                  },
+    "@minister":  {
+                      "description":  "Description pour la clé \u0027minister\u0027"
+                  },
+    "@servantOfGod":  {
+                          "description":  "Description pour la clé \u0027servantOfGod\u0027"
+                      },
+    "@media":  {
+                   "description":  "Description pour la clé \u0027media\u0027"
+               },
+    "@photoVideoSound":  {
+                             "description":  "Description pour la clé \u0027photoVideoSound\u0027"
+                         },
+    "@labelManager":  {
+                          "description":  "Description pour la clé \u0027labelManager\u0027"
+                      },
+    "@producer":  {
+                      "description":  "Description pour la clé \u0027producer\u0027"
+                  },
+    "@organizer":  {
+                       "description":  "Description pour la clé \u0027organizer\u0027"
+                   },
+    "@eventsAndConcerts":  {
+                               "description":  "Description pour la clé \u0027eventsAndConcerts\u0027"
+                           },
+    "@particular":  {
+                        "description":  "Description pour la clé \u0027particular\u0027"
+                    },
+    "@musicLover":  {
+                        "description":  "Description pour la clé \u0027musicLover\u0027"
+                    },
+    "@role":  {
+                  "description":  "Description pour la clé \u0027role\u0027"
+              },
+    "@selectRole":  {
+                        "description":  "Description pour la clé \u0027selectRole\u0027"
+                    },
+    "@instrument":  {
+                        "description":  "Description pour la clé \u0027instrument\u0027"
+                    },
+    "@selectInstrument":  {
+                              "description":  "Description pour la clé \u0027selectInstrument\u0027"
+                          },
+    "@privacyPolicyText":  {
+                               "description":  "Description pour la clé \u0027privacyPolicyText\u0027"
+                           },
+    "@readAndAccept":  {
+                           "description":  "Description pour la clé \u0027readAndAccept\u0027"
+                       },
+    "@privacyPolicy":  {
+                           "description":  "Description pour la clé \u0027privacyPolicy\u0027"
+                       },
+    "@ofAppByAuthor":  {
+                           "description":  "Description pour la clé \u0027ofAppByAuthor\u0027"
+                       },
+    "@save":  {
+                  "description":  "Description pour la clé \u0027save\u0027"
+              },
+    "@instrumentOrRole":  {
+                              "description":  "Description pour la clé \u0027instrumentOrRole\u0027"
+                          },
+    "@ministry":  {
+                      "description":  "Description pour la clé \u0027ministry\u0027"
+                  },
+    "@selectionRequired":  {
+                               "description":  "Description pour la clé \u0027selectionRequired\u0027"
+                           },
+    "@rolePianist":  {
+                         "description":  "Description pour la clé \u0027rolePianist\u0027"
+                     },
+    "@roleDrummer":  {
+                         "description":  "Description pour la clé \u0027roleDrummer\u0027"
+                     },
+    "@roleBassist":  {
+                         "description":  "Description pour la clé \u0027roleBassist\u0027"
+                     },
+    "@roleGuitarist":  {
+                           "description":  "Description pour la clé \u0027roleGuitarist\u0027"
+                       },
+    "@roleSaxophonist":  {
+                             "description":  "Description pour la clé \u0027roleSaxophonist\u0027"
+                         },
+    "@rolePercussionist":  {
+                               "description":  "Description pour la clé \u0027rolePercussionist\u0027"
+                           },
+    "@roleViolinist":  {
+                           "description":  "Description pour la clé \u0027roleViolinist\u0027"
+                       },
+    "@roleSynthesizer":  {
+                             "description":  "Description pour la clé \u0027roleSynthesizer\u0027"
+                         },
+    "@roleTrumpeter":  {
+                           "description":  "Description pour la clé \u0027roleTrumpeter\u0027"
+                       },
+    "@roleFlutist":  {
+                         "description":  "Description pour la clé \u0027roleFlutist\u0027"
+                     },
+    "@roleSinger":  {
+                        "description":  "Description pour la clé \u0027roleSinger\u0027"
+                    },
+    "@roleChoirMaster":  {
+                             "description":  "Description pour la clé \u0027roleChoirMaster\u0027"
+                         },
+    "@roleMusicTrainer":  {
+                              "description":  "Description pour la clé \u0027roleMusicTrainer\u0027"
+                          },
+    "@roleSoundEngineer":  {
+                               "description":  "Description pour la clé \u0027roleSoundEngineer\u0027"
+                           },
+    "@roleBeatmaker":  {
+                           "description":  "Description pour la clé \u0027roleBeatmaker\u0027"
+                       },
+    "@rolePastor":  {
+                        "description":  "Description pour la clé \u0027rolePastor\u0027"
+                    },
+    "@roleProphet":  {
+                         "description":  "Description pour la clé \u0027roleProphet\u0027"
+                     },
+    "@roleDeacon":  {
+                        "description":  "Description pour la clé \u0027roleDeacon\u0027"
+                    },
+    "@roleEvangelist":  {
+                            "description":  "Description pour la clé \u0027roleEvangelist\u0027"
+                        },
+    "@roleDoctor":  {
+                        "description":  "Description pour la clé \u0027roleDoctor\u0027"
+                    },
+    "@roleApostle":  {
+                         "description":  "Description pour la clé \u0027roleApostle\u0027"
+                     },
+    "@requiredField":  {
+                           "description":  "Description pour la clé \u0027requiredField\u0027"
+                       },
+    "@passwordUpdatedSuccess":  {
+                                    "description":  "Description pour la clé \u0027passwordUpdatedSuccess\u0027"
+                                },
+    "@updatePasswordTitle":  {
+                                 "description":  "Description pour la clé \u0027updatePasswordTitle\u0027"
+                             },
+    "@newPasswordLabel":  {
+                              "description":  "Description pour la clé \u0027newPasswordLabel\u0027"
+                          },
+    "@updateButton":  {
+                          "description":  "Description pour la clé \u0027updateButton\u0027"
+                      },
+    "@cacheCleared":  {
+                          "description":  "Description pour la clé \u0027cacheCleared\u0027"
+                      },
+    "@pleaseAuthenticate":  {
+                                "description":  "Description pour la clé \u0027pleaseAuthenticate\u0027"
+                            },
+    "@biometricReason":  {
+                             "description":  "Description pour la clé \u0027biometricReason\u0027"
+                         },
+    "@authenticationFailed":  {
+                                  "description":  "Description pour la clé \u0027authenticationFailed\u0027"
+                              },
+    "@secureAppTitle":  {
+                            "description":  "Description pour la clé \u0027secureAppTitle\u0027"
+                        },
+    "@retryButton":  {
+                         "description":  "Description pour la clé \u0027retryButton\u0027"
+                     },
+    "@errorTitle":  {
+                        "description":  "Description pour la clé \u0027errorTitle\u0027"
+                    },
+    "@errorDetails":  {
+                          "description":  "Description pour la clé \u0027errorDetails\u0027"
+                      },
+    "@errorContext":  {
+                          "description":  "Description pour la clé \u0027errorContext\u0027"
+                      },
+    "@errorTrace":  {
+                        "description":  "Description pour la clé \u0027errorTrace\u0027"
+                    },
+    "@unknownTechnicalError":  {
+                                   "description":  "Description pour la clé \u0027unknownTechnicalError\u0027"
+                               },
+    "@unknownError":  {
+                          "description":  "Description pour la clé \u0027unknownError\u0027"
+                      },
+    "@errorDisplayError":  {
+                               "description":  "Description pour la clé \u0027errorDisplayError\u0027"
+                           },
+    "@systemDiagnostic":  {
+                              "description":  "Description pour la clé \u0027systemDiagnostic\u0027"
+                          },
+    "@restartApp":  {
+                        "description":  "Description pour la clé \u0027restartApp\u0027"
+                    },
+    "@pleaseRestartApp":  {
+                              "description":  "Description pour la clé \u0027pleaseRestartApp\u0027"
+                          },
+    "@welcomeSuperAdmin":  {
+                               "description":  "Description pour la clé \u0027welcomeSuperAdmin\u0027"
+                           },
+    "@debateTopicTitle":  {
+                              "description":  "Description pour la clé \u0027debateTopicTitle\u0027"
+                          },
+    "@topicTitleLabel":  {
+                             "description":  "Description pour la clé \u0027topicTitleLabel\u0027"
+                         },
+    "@descriptionLabel":  {
+                              "description":  "Description pour la clé \u0027descriptionLabel\u0027"
+                          },
+    "@cancelButton":  {
+                          "description":  "Description pour la clé \u0027cancelButton\u0027"
+                      },
+    "@publishButton":  {
+                           "description":  "Description pour la clé \u0027publishButton\u0027"
+                       },
+    "@activeDebateTopic":  {
+                               "description":  "Description pour la clé \u0027activeDebateTopic\u0027"
+                           },
+    "@membersInCommunion":  {
+                                "description":  "Description pour la clé \u0027membersInCommunion\u0027"
+                            },
+    "@typingIndicator":  {
+                             "description":  "Description pour la clé \u0027typingIndicator\u0027"
+                         },
+    "@replyTo":  {
+                     "description":  "Description pour la clé \u0027replyTo\u0027"
+                 },
+    "@defineDebateTopicTooltip":  {
+                                      "description":  "Description pour la clé \u0027defineDebateTopicTooltip\u0027"
+                                  },
+    "@inCommunion":  {
+                         "description":  "Description pour la clé \u0027inCommunion\u0027"
+                     },
+    "@welcomeVisionMunokolive":  {
+                                     "description":  "Description pour la clé \u0027welcomeVisionMunokolive\u0027"
+                                 },
+    "@musiciansSalon":  {
+                            "description":  "Description pour la clé \u0027musiciansSalon\u0027"
+                        },
+    "@pastorsSalon":  {
+                          "description":  "Description pour la clé \u0027pastorsSalon\u0027"
+                      },
+    "@cannotMessageSelf":  {
+                               "description":  "Description pour la clé \u0027cannotMessageSelf\u0027"
+                           },
+    "@sendError":  {
+                       "description":  "Description pour la clé \u0027sendError\u0027"
+                   },
+    "@viewProfile":  {
+                         "description":  "Description pour la clé \u0027viewProfile\u0027"
+                     },
+    "@privateMessage":  {
+                            "description":  "Description pour la clé \u0027privateMessage\u0027"
+                        },
+    "@createAccountLink":  {
+                               "description":  "Description pour la clé \u0027createAccountLink\u0027"
+                           },
+    "@impossibleOpenWhatsApp":  {
+                                    "description":  "Description pour la clé \u0027impossibleOpenWhatsApp\u0027"
+                                },
+    "@errorOpeningWhatsApp":  {
+                                  "description":  "Description pour la clé \u0027errorOpeningWhatsApp\u0027"
+                              },
+    "@numberNotAvailable":  {
+                                "description":  "Description pour la clé \u0027numberNotAvailable\u0027"
+                            },
+    "@impossibleLaunchCall":  {
+                                  "description":  "Description pour la clé \u0027impossibleLaunchCall\u0027"
+                              },
+    "@promoteAdmin":  {
+                          "description":  "Description pour la clé \u0027promoteAdmin\u0027"
+                      },
+    "@demoteAdmin":  {
+                         "description":  "Description pour la clé \u0027demoteAdmin\u0027"
+                     },
+    "@promoteAction":  {
+                           "description":  "Description pour la clé \u0027promoteAction\u0027"
+                       },
+    "@demoteAction":  {
+                          "description":  "Description pour la clé \u0027demoteAction\u0027"
+                      },
+    "@cancel":  {
+                    "description":  "Description pour la clé \u0027cancel\u0027"
+                },
+    "@confirm":  {
+                     "description":  "Description pour la clé \u0027confirm\u0027"
+                 },
+    "@roleUpdatedSuccess":  {
+                                "description":  "Description pour la clé \u0027roleUpdatedSuccess\u0027"
+                            },
+    "@churchNotSpecified":  {
+                                "description":  "Description pour la clé \u0027churchNotSpecified\u0027"
+                            },
+    "@writePrivate":  {
+                          "description":  "Description pour la clé \u0027writePrivate\u0027"
+                      },
+    "@call":  {
+                  "description":  "Description pour la clé \u0027call\u0027"
+              },
+    "@numberCopied":  {
+                          "description":  "Description pour la clé \u0027numberCopied\u0027"
+                      },
+    "@whatsapp":  {
+                      "description":  "Description pour la clé \u0027whatsapp\u0027"
+                  },
+    "@sms":  {
+                 "description":  "Description pour la clé \u0027sms\u0027"
+             },
+    "@map":  {
+                 "description":  "Description pour la clé \u0027map\u0027"
+             },
+    "@locationNotAvailable":  {
+                                  "description":  "Description pour la clé \u0027locationNotAvailable\u0027"
+                              },
+    "@mission":  {
+                     "description":  "Description pour la clé \u0027mission\u0027"
+                 },
+    "@contactCaps":  {
+                         "description":  "Description pour la clé \u0027contactCaps\u0027"
+                     },
+    "@informations":  {
+                          "description":  "Description pour la clé \u0027informations\u0027"
+                      },
+    "@memberNearbyDiscreet":  {
+                                  "description":  "Description pour la clé \u0027memberNearbyDiscreet\u0027"
+                              },
+    "@archiveMode":  {
+                         "description":  "Description pour la clé \u0027archiveMode\u0027"
+                     },
+    "@archiveModeSubtitle":  {
+                                 "description":  "Description pour la clé \u0027archiveModeSubtitle\u0027"
+                             },
+    "@radarSynced":  {
+                         "description":  "Description pour la clé \u0027radarSynced\u0027"
+                     },
+    "@gpsDisabled":  {
+                         "description":  "Description pour la clé \u0027gpsDisabled\u0027"
+                     },
+    "@permissionDenied":  {
+                              "description":  "Description pour la clé \u0027permissionDenied\u0027"
+                          },
+    "@radarError":  {
+                        "description":  "Description pour la clé \u0027radarError\u0027"
+                    },
+    "@enableLocationMessage":  {
+                                   "description":  "Description pour la clé \u0027enableLocationMessage\u0027"
+                               },
+    "@enableGPS":  {
+                       "description":  "Description pour la clé \u0027enableGPS\u0027"
+                   },
+    "@openSettings":  {
+                          "description":  "Description pour la clé \u0027openSettings\u0027"
+                      },
+    "@filterMusicians":  {
+                             "description":  "Description pour la clé \u0027filterMusicians\u0027"
+                         },
+    "@filterMenOfGod":  {
+                            "description":  "Description pour la clé \u0027filterMenOfGod\u0027"
+                        },
+    "@filterPlaces":  {
+                          "description":  "Description pour la clé \u0027filterPlaces\u0027"
+                      },
+    "@categoryMember":  {
+                            "description":  "Description pour la clé \u0027categoryMember\u0027"
+                        },
+    "@categoryPlace":  {
+                           "description":  "Description pour la clé \u0027categoryPlace\u0027"
+                       },
+    "@categoryChurch":  {
+                            "description":  "Description pour la clé \u0027categoryChurch\u0027"
+                        },
+    "@categoryStudio":  {
+                            "description":  "Description pour la clé \u0027categoryStudio\u0027"
+                        },
+    "@categoryRehearsal":  {
+                               "description":  "Description pour la clé \u0027categoryRehearsal\u0027"
+                           },
+    "@categoryEventSpace":  {
+                                "description":  "Description pour la clé \u0027categoryEventSpace\u0027"
+                            }
 }
