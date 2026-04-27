@@ -19,6 +19,7 @@ import 'package:munokolive_music/services/notification_service.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:munokolive_music/ui/widgets/global_error_widget.dart';
 import 'package:munokolive_music/ui/widgets/error_state_widget.dart';
 
@@ -44,6 +45,9 @@ void main() async {
       } catch (e) {
         debugPrint('Firebase init error (ignored for dev): $e');
       }
+
+      // Initialize locale data for date formatting (fr_FR used throughout the app)
+      await initializeDateFormatting('fr_FR', null);
 
       final prefs = await SharedPreferences.getInstance();
 
